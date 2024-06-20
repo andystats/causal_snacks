@@ -24,7 +24,9 @@ library(tableone)
 library(cobalt)   
 library(PSweight)  
 library(tmle)
-
+library(DoubleML)
+library(mlr3)
+library(mlr3learners)
 set.seed(12345)
 ```
 
@@ -72,11 +74,7 @@ One approach to estimating causal effects in observational studies is to emulate
 
 ## Crude (Naive) Estimates 
 
-Usually, when epidemiologists deal with binary outcomes, we tend to use odds ratios (OR) rather than a simple rate difference ($p_{(treated)}-p_{(untreated)}$).
-
-$$OR: \frac{odds_{(treated)}}{odds_{(untreated)}}$$
-
-where odds = $\frac{p}{1-p}$
+This is simple the apparent difference in means between treatment groups, ignoring all else. You can also think of this as the conditional mean difference: $$E[cholesterol|statin=1]-E[cholesterol|statin=0]$$
 
 ***
 
@@ -163,6 +161,10 @@ By doing this for all individuals, g-computation fills in the missing potential 
 
 Targeted Maximum Likelihood Estimation (tmle) and the broader statistical approach of Targeted Learning is perhaps the most promising method to be applied to real world data in recent times. It tends to be the best statistical method for a given study design for *washing out* bias by using a substitution estimator approach (starting with a g-computation estimator and deriving a fluctuation parameter from the propensity score and something called the `clever covariate`)
 
+```{r tmle, echo=FALSE, fig.cap='Figure 3: TMLE takes the same form as g-computation, but the red stars indicate an updated Q(1) and Q(0).', out.width = '90%'}
+knitr::include_graphics("tmle.png")
+```
+
 "A second chance to get it right" using the components we've introduced!
 
 See van der Laan and Rose (2011) for an excellent full course on Targeted Learning.
@@ -217,7 +219,9 @@ library(tableone)
 library(cobalt)   
 library(PSweight)  
 library(tmle)
-
+library(DoubleML)
+library(mlr3)
+library(mlr3learners)
 set.seed(12345)
 ```
 
@@ -233,36 +237,56 @@ We're going to use a package called `simcausal` to create a hypothetical DAG and
 
 ```{r}
 D_AW <- DAG.empty() + 
-  node("W4", distr="rbern", prob=0.1) +
-  node("W2", distr="rbern", prob=plogis(-0.1 + 0.2*W4)) +
-  node("W3", distr = "runif", min = 0, max = 4) +
-  node("W1", distr="rbern", prob=0.55) +
-  node("A", distr="rbern", prob=plogis(-0.1 + 0.1*W1 + 0.15*W2 + log(0.2*W3))) +
-  #Counterfactual
-  node("Y.1", distr="rbern", prob= plogis(-1 + 1 -0.1*W1 + 0.3*W2 + 0.1*W3 + 0.25*W4)) +
-  node("Y.0", distr="rbern", prob= plogis(-1 + 0 -0.1*W1 + 0.3*W2 + 0.1*W3 + 0.25*W4)) +
-  # Observed outcome
-  node("Y",  distr = "rconst", const =Y.1*A + Y.0*(1 - A))  
+  node("age", distr = "rnorm", mean = 50, sd = 10) +
+        node("gender", distr = "rbern", prob = 0.5) +
+       node("priorchol", distr = "rnorm", mean = 200 + 0.5 * age, sd = 30) +
+        node("statin", distr = "rbern", prob = plogis(-2 + 0.02 * priorchol + 0.01 * age - 0.5 * gender)) +
+        node("cholesterol", distr = "rnorm", mean = 180 - 20 * statin + 0.8 * priorchol + 0.5 * age + 5 * gender, sd = 15)
 
 D_AW_set <- set.DAG(D_AW)
 ```
 
+
+
+
 <!-- Let's look at our DAG (notice interesting configuration of counterfactuals and outcome) -->
 
-<!-- ```{r} -->
+```{r}
 
-<!-- plotDAG(D_AW_set, xjitter = 0.3, yjitter = 0.3) -->
+plotDAG(D_AW_set, xjitter = 0.3, yjitter = 0.3)
 
-<!-- ``` -->
+```
 
 ### Generate synthetic data
 
 Now let's generate some data (let's start with n = 5000)
 
 ```{r}
-ObsData <- sim(DAG = D_AW_set, n = 5000, rndseed = 123)
+ObsData <- sim(DAG = D_AW_set, n = 5000, rndseed = 12345)
 head(ObsData)
 ```
+
+
+```{r}
+
+A1 <- node("statin", distr = "rbern", prob = 1)
+D_AW_set <- D_AW_set + action("A1", nodes = A1)
+A0 <- node("statin", distr = "rbern", prob = 0)
+D_AW_set <- D_AW_set + action("A0", nodes = A0)
+
+Xdat1 <- sim(DAG = D_AW_set, actions = c("A1", "A0"), n = 5000, rndseed = 12345)
+
+Y1 <- Xdat1[["A1"]][,"cholesterol" ]
+Y0 <- Xdat1[["A0"]][,"cholesterol" ]
+
+(True_ATE <- mean(Y1 - Y0))
+
+```
+
+
+
+
+
 
 Notice we have created the *full* dataset! We have the usually unavalable Y(1) and Y(0) as well as observed Y.
 
@@ -275,21 +299,25 @@ We'll compare this to the *true* ATE: ψ = E[Y(1)] - E[Y(0)]. (note we can only 
 [Think "*conditional* A" vs. "*do* A."]
 
 ```{r}
-treat <- ObsData %>% filter(A == 1) %>% select(Y) 
-controls <- ObsData %>% filter(A == 0) %>% select(Y) 
+treat <- ObsData %>% filter(statin == 1) %>% select(cholesterol) 
+controls <- ObsData %>% filter(statin == 0) %>% select(cholesterol) 
 
-(naive_est <- mean(treat$Y) - mean(controls$Y))
+(naive_est <- mean(treat$cholesterol) - mean(controls$cholesterol))
 
-(True_ATE <- mean(ObsData$Y.1-ObsData$Y.0))
+(True_ATE <- mean(Y1 - Y0))
 
+# Absolute bias
 (bias <- naive_est - True_ATE)
+
+# Percent bias
+(naive_est-True_ATE)/True_ATE*100
 ```
 
-We define the difference between these as **bias**:
+We define percent **bias** as:
 
-bias = E[$\widehat{\psi}$] - $\psi$
+ $$\% bias =\frac{\widehat{\psi} - \psi }{\psi} * 100\%$$  
 
-so our bias in the above example is 0.2896 - 0.2664 = 0.0232.
+So our bias in the above example is `r round((naive_est-True_ATE)/True_ATE*100,4)`%.
 
 An estimator is said to be unbiased if its bias is zero.
 
@@ -310,50 +338,45 @@ All right. Let's get down to business removing this bias and getting the estimat
 It's good to plant our flag and see how bad it is if we don't do anything about bias (you'll see we just recover the initial biased estimate, but it should help level-set).
 
 ```{r}
-naive <- glm(Y ~ A, data = ObsData)
+naive <- glm(cholesterol ~ statin, data = ObsData)
 summary(naive)
 
 ```
 
-As we can see, we get the biased estimate by regression (A coefficient = `r round(naive$coefficients["A"],4)`)
+As we can see, we get the biased estimate by regression (statin coefficient = `r round(naive$coefficients["statin"],4)`)
 
-So our initial bias from simple (unadjusted) regression is 0.2896 - 0.2664 = **0.0232**.
+So our initial percent bias from simple (unadjusted) regression is `r round((naive$coefficients["statin"]-True_ATE)/True_ATE*100,2)`%.
 
-$~$
 
-$~$
 
-Note: usually, when epidemiologists deal with binary outcomes, we tend to use odds ratios (OR) rather than a simple rate difference ($p_{(treated)}-p_{(untreated)}$).
-
-$$OR: \frac{odds_{(treated)}}{odds_{(untreated)}}$$
-
-where odds = $\frac{p}{1-p}$
 
 ### Using Propensity Scores for Matching
 
 We'll use the `tableone` package:
 
-Remember, we identified W1, W2, W3, and W4 as potential confounders.
+Remember, we identified age, gender and prior cholesterol as potential confounders.
 
 ```{r}
-xvars<-c("W1","W2","W3","W4")
+xvars<-c("age","gender","priorchol")
 ```
 
 ```{r}
-table1<- CreateTableOne(vars=xvars, strata="A", data=ObsData )
+table1<- CreateTableOne(vars=xvars, strata="statin", data=ObsData )
 ## include standardized mean difference (SMD)
 print(table1, smd=TRUE)
 ```
 
-Wow – dramatic difference in W3 (Insurance). Average Insurance (which in this case was generated to be uniform between 0-4) is much higher in those treated than those untreated. A typical metric is the standardized mean difference (SMD) and a heuristic for balance is a SMD \<0.1.
+Wow – dramatic difference in gender and prior-cholesterol. A typical metric is the standardized mean difference (SMD) and a heuristic for balance is a SMD \<0.1.
 
 ```{r}
-propensity_model <- matchit(A ~ W1 + W2 + W3 + W4, 
+propensity_model <- matchit(statin ~ age + gender + priorchol, 
                     data = ObsData, 
                     method = "nearest", # computationally efficient
-                    ratio = 1)
+                    ratio = 1, 
+                    caliper = 0.05)
 bal.tab(propensity_model, m.threshold=0.1)
 ```
+
 
 #### Examine matching triage
 
@@ -370,7 +393,7 @@ md <- match.data(propensity_model)
 ```
 
 ```{r}
-adjusted.PSmatch <- glm(Y ~ A,
+adjusted.PSmatch <- glm(cholesterol ~ statin,
                         data = md, 
                         weights = weights)
 
@@ -378,7 +401,7 @@ summary(adjusted.PSmatch)
 
 ```
 
-You'll notice now we're closer to the *true* value (`r round(adjusted.PSmatch$coefficients["A"], 4)` vs true value = `r round(True_ATE, 4)`).
+You'll notice now we're closer to the *true* value (`r round(adjusted.PSmatch$coefficients["statin"], 4)` vs true value = `r round(True_ATE, 4)`).
 
 #### Using Propensity Scores for Weighting
 
@@ -386,7 +409,7 @@ Let's use the `WeightIt` package to recalculate weights (both non-stabilized and
 
 ```{r}
 # Calculating non-stabilized weights
-w.out.ns <- weightit(A ~ W1 + W2 + W3 + W4, data = ObsData, method = "ps", estimand = "ATE")
+w.out.ns <- weightit(cholesterol ~ age + gender + priorchol, data = ObsData, method = "ps", estimand = "ATE")
 summary(w.out.ns)
 
 # Adding weights to data
@@ -397,7 +420,7 @@ And again for stabilized weights:
 
 ```{r}
 # Calculating stabilized weights
-w.out.st <- weightit(A ~ W1 + W2 + W3 + W4, data = ObsData, method = "ps", estimand = "ATE", stabilize = TRUE)
+w.out.st <- weightit(cholesterol ~ age + gender + priorchol, data = ObsData, method = "ps", estimand = "ATE", stabilize = TRUE)
 summary(w.out.st)
 
 # Adding weights to data
@@ -410,41 +433,45 @@ design_ns <- svydesign(ids = ~1, weights = ~weights_ns, data = ObsData)
 design_st <- svydesign(ids = ~1, weights = ~weights_st, data = ObsData)
 
 # Estimating ATE using non-stabilized weights
-ate_ns <- svyglm(Y ~ A, design = design_ns)
+ate_ns <- svyglm(cholesterol ~ statin, design = design_ns)
 summary(ate_ns)
 
 # Estimating ATE using stabilized weights
-ate_st <- svyglm(Y ~ A, design = design_st)
+ate_st <- svyglm(cholesterol ~ statin, design = design_st)
 summary(ate_st)
 ```
 
-Very nice - both of these coefficients are very close to the `true` value.
+nice - both of these coefficients are  close to the `true` value.
 
 ### G-Computation
 
 We can use the `SuperLearner` package to calculate expected outcomes and then set treatment to 0 and 1 for each individual to generate $\widehat{Y_i}(T=0)$ and $\widehat{Y_i}(T=1)$ (which we'll call Q_0 and Q_1).
 
 ```{r}
+# Define Super Learner libraries
 sl_libs <- c("SL.glmnet", "SL.ranger", "SL.glm")
-Obs <- ObsData %>% dplyr::select(A, Y, W1, W2, W3, W4)
-
-Y <- Obs$Y
-W_A <- Obs %>% dplyr::select(-Y) 
+# Select relevant variables from the dataset
+Obs <- ObsData %>% dplyr::select(statin, cholesterol,age, gender, priorchol)
+# Extract outcome and covariates
+Y <- Obs$cholesterol
+W_A <- Obs %>% dplyr::select(-cholesterol) 
+# Step 1: Outcome regression using Super Learner
 Q <- SuperLearner(Y = Y,  
                   X = W_A,  
-                  family=binomial(),  
                   SL.library = sl_libs)
 
 
 Q_A <- as.vector(predict(Q)$pred)
 
-W_A1 <- W_A %>% mutate(A = 1)  # Set A = 1
+# Predict Q for treated (A = 1) and untreated (A = 0)
+W_A1 <- W_A %>% mutate(statin = 1)  # Set A = 1
 Q_1 <- as.vector(predict(Q, newdata = W_A1)$pred)
 
-W_A0 <- W_A %>% mutate(A = 0) # Set A = 0
+W_A0 <- W_A %>% mutate(statin = 0) # Set A = 0
 Q_0 <- as.vector(predict(Q, newdata = W_A0)$pred)
 
-dat_g.comp <- as.data.frame(cbind(Y = Obs$Y, A = Obs$A, Q_A, Q_0, Q_1))
+# Create dataset for g-computation
+dat_g.comp <- as.data.frame(cbind(Y = Obs$cholesterol, A = Obs$statin, Q_A, Q_0, Q_1))
 ```
 
 Now the g-computation estimate of the ATE is simply the average difference of Q_1 - Q_0:
@@ -468,22 +495,26 @@ Done. This is the g-computation step.
 -   Step 2a: Estimate the propensity score:
 
 ```{r}
-A <- Obs$A
-W <- Obs %>% dplyr::select(-Y, -A)
+# Propensity score estimation using Super Learner
+A <- Obs$statin
+W <- Obs %>% dplyr::select(-cholesterol, -statin)
 g <- SuperLearner(Y = A,  
                   X = W,  
                   family=binomial(),  
                   SL.library=sl_libs)
+g_w <- as.vector(predict(g)$pred)
 ```
 
 -   Step 2b: Estimate the clever covariate
 
 ```{r}
-g_w <- as.vector(predict(g)$pred)
+
 H_1 <- 1/g_w
 
 H_0 <- -1/(1-g_w) 
-dat_tmle <- # add clever covariate data to previous dataset we made
+
+# add clever covariate data to previous dataset we made
+dat_tmle <- 
   dat_g.comp %>%
   bind_cols(
     H_1 = H_1,
@@ -495,9 +526,8 @@ dat_tmle <- # add clever covariate data to previous dataset we made
 -   Step 3: Estimate the Fluctuation Parameter
 
 ```{r}
-glm_fit <- glm(Y ~ -1 + offset(qlogis(Q_A)) + H_A, 
-               data=dat_tmle, 
-               family=binomial)
+glm_fit <- glm(Y ~ -1 + offset(Q_A) + H_A, 
+               data=dat_tmle)
 
 (eps <- coef(glm_fit))
 ```
@@ -505,18 +535,17 @@ glm_fit <- glm(Y ~ -1 + offset(qlogis(Q_A)) + H_A,
 -   Step 4: Update the Initial Estimates of the Expected Outcome
 
 ```{r}
-H_A <- dat_tmle$H_A 
-Q_A_update <- plogis(qlogis(Q_A) + eps*H_A)
-
-  Q_1_update <- plogis(qlogis(Q_1) + eps*H_1)
+dat_tmle<- dat_tmle %>% 
+ mutate(Q_A_update = Q_A + eps*H_A,
+        Q_1_update = Q_1 + eps*H_1,
+        Q_0_update = Q_0 + eps*H_0) 
   
-  Q_0_update <- plogis(qlogis(Q_0) + eps*H_0)
 ```
 
 -   Step 5: Compute the Statistical Estimand of Interest
 
 ```{r}
-(tmle_ate <- mean(Q_1_update - Q_0_update))  
+(tmle_ate <- mean(dat_tmle$Q_1_update - dat_tmle$Q_0_update))  
 ```
 
 *Chef's Kiss*
@@ -535,23 +564,68 @@ tmle_fit
 tmle_fit$estimates$ATE$psi
 ```
 
+# Double machine learning
+
+Another promising technique for controlling for confounding variables using machine learning methods is Double Machine Learning (DML). 
+
+The core idea of DML is to leverage machine learning algorithms to flexibly model and control for confounders while isolating the effect of the treatment variable on the outcome. The core steps of the DML algorithm are: 
+
+1) **Prediction:** Predict the outcome variable $Y$ and the treatment variable $D$ using covariates $Z$ by estimating $E[Y|Z]$ and $E[D|Z]$. This can be done using machine learning methods such as Random Forest or other high-performing ML tools (we use random forests in our worked example)
+
+2) **Residualization (Orthogonalization):** Compute the residuals $W = Y - E[Y|Z]$ and $V = D - E[D|Z]$. This step is similar to the Frisch-Waugh-Lovell procedure briefly outlined below.
+
+3) **Regression:** Regress $W$ on $V$ to estimate the target parameter $\psi$. 
+
+The Key Ingredients of DML are:
+
+* Neyman orthogonality
+* High-quality ML estimation
+* Sample splitting
+
+
+
+citation:  Victor Chernozhukov, Denis Chetverikov, Mert Demirer, Esther Duflo, Christian Hansen, Whitney Newey, James Robins, Double/debiased machine learning for treatment and structural parameters, The Econometrics Journal, Volume 21, Issue 1, 1 February 2018, Pages C1–C68, https://doi.org/10.1111/ectj.12097
+
 ```{r}
-ate_ns$coefficients["A"] #PS weight not stab
+obj_dml_data = DoubleMLData$new(Obs, y_col = "cholesterol", d_cols = "statin")
+
+
+lgr::get_logger("mlr3")$set_threshold("warn")
+# Initialize a random forests learner with specified parameters
+ml_l = lrn("regr.ranger", num.trees = 100, mtry = 2, min.node.size = 2,
+           max.depth = 5)
+ml_m = lrn("regr.ranger", num.trees = 100, mtry = 2, min.node.size = 2,
+           max.depth = 5)
+ml_g = lrn("regr.ranger", num.trees = 100, mtry = 2, min.node.size = 2,
+           max.depth = 5)
+
+
+doubleml_plr = DoubleMLPLR$new(obj_dml_data,
+                               ml_l, ml_m, ml_g,
+                               n_folds = 2,
+                               score = "IV-type")
+
+
+doubleml_plr$fit()
+doubleml_plr$summary()
 ```
 
-#### Everything together:
+
+
+# Everything together:
 
 ```{r}
-plot(c(1,2,3,4, 5), c(naive$coefficients["A"], 
-                 adjusted.PSmatch$coefficients["A"],
-                 ate_ns$coefficients["A"],
+plot(c(1,2,3,4,5,6), c(naive$coefficients["statin"], 
+                 adjusted.PSmatch$coefficients["statin"],
+                 ate_ns$coefficients["statin"],
                  ate_gcomp, 
-                 tmle_fit$estimates$ATE$psi),
-     ylim = c(0.24,.3), 
+                 tmle_fit$estimates$ATE$psi, 
+                 doubleml_plr$coef),
+     ylim = c(-5,-25), 
      ylab = "parameter estimate", 
      xlab = "method",
      axes = F, lwd = 2)
-axis(1, at = c(1,2,3,4, 5), labels = c("crude", "PS-matched", "PS-weighted"," G-comp", "TMLE"))
+axis(1, at = c(1,2,3,4, 5,6), labels = c("crude", "PS-match.", "PS-weight."," G-comp", "TMLE", "DML"))
 axis(2)
 abline(h = True_ATE, lty = 2, lwd = 2, col = "grey")
 text(2, .26, "grey line = 'true value'")
@@ -562,15 +636,14 @@ text(2, .26, "grey line = 'true value'")
 ```{r}
 theme_set(theme_dag())
 
-D_AW_DAG <- dagify(Y ~  A + W1 + W2 + W3 + W4 ,
+D_AW_DAG <- dagify(Y ~  A + W1 + W2 + W3 ,
                    A ~ W1 + W2 + W3,
-                   W2 ~ W4,
-                   labels = c("Y" = "Cardiac\n Arrest", 
-                              "A" = "Treatment",
-                              "W1" = "Treatment history",
-                              "W2" = "Baseline severity",
-                              "W3" = "Insurance", 
-                              "W4" = "Age"),
+                   W3 ~ W1,
+                   labels = c("Y" = "Cholesterol", 
+                              "A" = "Statins",
+                              "W1" = "Age",
+                              "W2" = "Gender",
+                              "W3" = "Prior Cholesterol"),
                    exposure = "A",
                    outcome = "Y")
 ggdag(D_AW_DAG, text = TRUE, use_labels = "label")
@@ -584,8 +657,55 @@ Look at options here:
 
 ```{r}
 # control_for(D_AW_DAG, var = "W1")
-ggdag_adjust(D_AW_DAG, var = "W1")
+ggdag_adjust(D_AW_DAG, var = "W3")
 ```
+
+
+# Bonus Frisch-Waugh-Lovell (FWL) 
+
+## 1. Regress A (T) on W (X)
+
+```{r}
+a.hat <- glm(statin ~  age + gender + priorchol, data = ObsData)
+```
+
+
+
+
+## 2. Regress Y on W (X)
+
+```{r}
+y.hat <- glm(cholesterol ~  age + gender + priorchol, data = ObsData)
+```
+
+
+## 3. Compute residuals from regressions 1 & 2. 
+
+```{r}
+delta.a <- a.hat$residuals
+delta.y <- y.hat$residuals
+```
+
+
+
+## 4. Regress residuals delta.y on residuals delta.a
+
+```{r}
+Delta <- glm(delta.y ~ delta.a)
+
+Delta$coefficients["delta.a"]
+```
+
+Voila
+
+
+
+
+
+
+
+
+
 
 ***
 
@@ -595,7 +715,10 @@ ggdag_adjust(D_AW_DAG, var = "W1")
 2.  Austin, P. C. (2011). ["An introduction to propensity score methods for reducing the effects of confounding in observational studies."][austin] *Multivariate Behavioral Research*, 46(3), 399-424.
 3.  van der Laan, M. J., & Rose, S. (2011). ["Targeted Learning: Causal Inference for Observational and Experimental Data."][vanderlaan] Springer.
 
+
 ## Suggested Reading
+
+
 
 [kingetal]: <https://gking.harvard.edu/publications/why-propensity-scores-should-not-be-used-formatching> "King, G., & Nielsen, R. 2019. 'Why Propensity Scores Should Not Be Used for Matching,' Political Analysis, 27(4), 435-454: 'We show that propensity score matching (PSM), an enormously popular method of preprocessing data for causal inference, often accomplishes the opposite of its intended goal --- thus increasing imbalance, inefficiency, model dependence, and bias. The weakness of PSM comes from its attempts to approximate a completely randomized experiment, rather than, as with other matching methods, a more efficient fully blocked randomized experiment...'"
 [rosenbaumeta]: <https://academic.oup.com/biomet/article/70/1/41/240879> "Rosenbaum, P. R., & Rubin, D. B. (1983). 'The central role of the propensity score in observational studies for causal effects,' Biometrika, 70(1), 41-55: 'The propensity score is the conditional probability of assignment to a particular treatment given a vector of observed covariates. Both large and small sample theory show that adjustment for the scalar propensity score is sufficient to remove bias due to all observed covariates...'"
