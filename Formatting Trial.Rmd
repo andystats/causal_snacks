@@ -1,7 +1,7 @@
 ---
-title: "Crash Course on Confounding, Bias, and Deconfounding Remedies Using R"
+title: "Crash course on confounding, bias, and (modern) deconfounding remedies using R"
 author: "Andy Wilson and Aimee Harrison"
-date: "Jun 19$^{th}$, 2024"
+date: "Jun 20$^{th}$, 2024"
 output:
   html_document:
     toc: true
@@ -44,7 +44,11 @@ DAGs are particularly useful for identifying confounding because they clearly de
 knitr::include_graphics("DAG0.png")
 ```
 
-For example, let us consider a pseudo-real-life example: say treatment A (taking a medication, Axyza) is believed to reduce incidence of cardiac arrest in a population. In our DAG, we will draw two nodes: "treatment with Axyza" and "cardiac arrest," with an arrow pointing from exposure (Axyza) to outcome (cardiac arrest). Now, let's say it evident clear that four additional variables (confounders) influence both likelihood of receiving treatment and risk of having a heart attack: (a) treatment history, (b) baseline severity, (c) insurance, and (d) age. We add those nodes and corresponding directed edges into our diagram. Our DAG can now guide us in adjusting for confounders through propensity scores, TMLE, or other statistical methods, so we can better isolate the true effect of the treatment.
+For example, let us consider a pseudo-real-life example: treatment A (taking the medication Axyza) is believed to reduce cholesterol. In our simpolified DAG, we represent this with two nodes: "treatment with Axyza" and "cholesterol," with an arrow pointing from "treatment with Axyza" to "cholesterol," indicating the causal relationship. 
+
+Now, let's think a little more about the relationship between this treatment and outcome - let's say we know patients with previously high cholesterol are much more likely to be treated and that this prior level strongly influences subsequent levels. Additionally, age and gender are suspected to be be related to both treatment and outcome in our example. We say that these additional variables (confounders) influence both likelihood of receiving treatment and risk of having a heart attack.
+
+We add those nodes and corresponding directed edges into our diagram. Our DAG can now guide us in adjusting for confounders through propensity scores, TMLE, or other statistical methods, so we can better isolate the true effect of the treatment.
 
 Our plausible DAG:
 
@@ -582,9 +586,8 @@ The Key Ingredients of DML are:
 * High-quality ML estimation
 * Sample splitting
 
+See Chernozhukov, et. al., 2018 for the excellent, but highly-technical paper.
 
-
-citation:  Victor Chernozhukov, Denis Chetverikov, Mert Demirer, Esther Duflo, Christian Hansen, Whitney Newey, James Robins, Double/debiased machine learning for treatment and structural parameters, The Econometrics Journal, Volume 21, Issue 1, 1 February 2018, Pages C1–C68, https://doi.org/10.1111/ectj.12097
 
 ```{r}
 obj_dml_data = DoubleMLData$new(Obs, y_col = "cholesterol", d_cols = "statin")
@@ -714,7 +717,7 @@ Voila
 1.  Rosenbaum, P. R., & Rubin, D. B. (1983). ["The central role of the propensity score in observational studies for causal effects."][rosenbaumeta] *Biometrika*, 70(1), 41-55.
 2.  Austin, P. C. (2011). ["An introduction to propensity score methods for reducing the effects of confounding in observational studies."][austin] *Multivariate Behavioral Research*, 46(3), 399-424.
 3.  van der Laan, M. J., & Rose, S. (2011). ["Targeted Learning: Causal Inference for Observational and Experimental Data."][vanderlaan] Springer.
-
+4. Chernozhukov, V., Chetverikov, D., Demirer, M., Duflo, E., Hansen, C., Newey, W., & Robins, J. (2018). ["Double/debiased machine learning for treatment and structural parameters."][Chernozhukov] The Econometrics Journal, 21(1), C1-C68., https://doi.org/10.1111/ectj.12097
 
 ## Suggested Reading
 
@@ -726,3 +729,5 @@ Voila
 [vanderlaan]: <https://ctml.berkeley.edu/publications/targeted-learning-causal-inference-observational-and-experimental-data-0> "van der Laan, M. J., & Rose, S. (2011). 'Targeted Learning: Causal Inference for Observational and Experimental Data.' Springer: 'The statistics profession is at a unique point in history. The need for valid statistical tools is greater than ever; data sets are massive, often measuring hundreds of thousands of measurements for a single subject. The field is ready to move towards clear objective benchmarks under which tools can be evaluated. Targeted learning allows (1) the full generalization and utilization of cross-validation as an estimator selection tool so that the subjective choices made by humans are now made by the machine, and (2) targeting the fitting of the probability distribution of the data toward the target parameter representing the scientific question of interest...'"
 [hoverbias]: ## "Bias is a systematic error in the design or execution of a study that can lead to incorrect estimates of the association between exposure and health outcomes."
 [effectshover]: <https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2652882/> "For an overview of effects measures in RWD studies, see: Hernán, M.A., & Robins, J.M. (2006). 'Estimating causal effects from epidemiological data.' J Epidemiol Community Health. 60(7), 578-86: In ideal randomised experiments, association is causation: association measures can be interpreted as effect measures because randomisation ensures that the exposed and the unexposed are exchangeable. On the other hand, in observational studies, association is not generally causation: association measures cannot be interpreted as effect measures because the exposed and the unexposed are not generally exchangeable. However, observational research is often the only alternative for causal inference. This article reviews a condition that permits the estimation of causal effects from observational data, and two methods—standardisation and inverse probability weighting—to estimate population causal effects under that condition. For simplicity, the main description is restricted to dichotomous variables and assumes that no random error attributable to sampling variability exists. The appendix provides a generalisation of inverse probability weighting."
+[Chernozhukov]: <https://academic.oup.com/ectj/article/21/1/C1/5056401> "Double Machine Learning (DML) is a statistical technique designed to estimate causal effects while controlling for confounding variables using machine learning methods. It addresses the challenges posed by high-dimensional data, where traditional methods may fail to accurately estimate causal parameters due to overfitting and model complexity.
+The core idea of DML is to leverage machine learning algorithms to flexibly model and control for confounders while isolating the effect of the treatment variable on the outcome."
