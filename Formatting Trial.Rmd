@@ -1,5 +1,5 @@
 ---
-title: "Crash course on confounding, bias, and (modern) deconfounding remedies using R"
+title: "Crash course on confounding, bias, and deconfounding remedies using R"
 author: "Andy Wilson and Aimee Harrison"
 date: "Jun 20$^{th}$, 2024"
 output:
@@ -30,182 +30,35 @@ library(mlr3learners)
 set.seed(12345)
 ```
 
-Confounding [bias][hoverbias] is one of the most ubiquitous challenges in estimating effects from observational (real-world data) studies. Confounding happens when the relationship between a treatment (or other exposure) and an outcome is distorted by the presence of other variables. These confounding variables can create misleading associations, or biases, making it difficult to infer causal relationships accurately. These confounding variables can create misleading associations, making it difficult to infer causal relationships accurately. Fortunately for us, study design and statistical methods have been evolving to help us mitigate this bias and recover the [true effect estimate][effectshover] (when conditions are favorable: we'll touch on these, but point to better sources for a deeper dive).
+# Introduction {.tabset .tabset-fade .tabset-pills}
 
-Confounding bias^[Bias is a systematic error in the design or execution of a study that can lead to incorrect estimates of the association between exposure and health outcomes.] is one of the most ubiquitous challenges in estimating effects from observational (real-world data) studies. Fortunately, study design and statistical methods have been evolving to help us mitigate biases and recover the true effect estimate. In this article, we will introduce the concepts of confounding and bias, external control arm study design, target trial emulation. At the end of the example, you should have a general understanding of the benefits and shortcomings of traditional methods for estimating treatment effect, including propensity score matching and weighting, and g-computation, as well as modern methods, including targeted maximum likelihood estimating (TMLE). For the worked example, we will consider a scenario where the protective effect of a treatment against heart attacks is obscured by confounding. This is a common and reproducible type of problem in public health.
+Confounding bias is one of the most ubiquitous challenges in estimating effects from observational (real-world data) studies. Confounding happens when the relationship between a treatment (or other exposure) and an outcome is distorted by the presence of other variables. These confounding variables can create misleading associations, or biases, making it difficult to infer causal relationships accurately. Fortunately, study design and statistical methods have been evolving to help us mitigate biases and recover the true effect estimate.
 
-# Directed Acyclic Graphs
+In this article, we will use the concepts of confounding, bias, and target trial emulation to provide an overview of causal graphs, and introduce traditional and modern (or emerging) methods for estimating treatment effect, including targeted maximum likelihood estimating (TMLE) and double machine learning (DML). At the end, you should have a general understanding of the benefits and shortcomings of traditional and emerging methods for estimating treatment effect.
 
-Causal graphs, specifically Directed Acyclic Graphs (DAGs), are powerful tools used in epidemiology (and other fields) to visualize and understand the relationships between variables in a study. A DAG is a graphical representation where nodes represent variables, and directed edges (unidirectional arrows) indicate causal relationships between these variables. The "acyclic" aspect means that there are no loops or cycles, ensuring that the graph represents a unidirectional flow of causality.
+## How to read this article
 
-DAGs are particularly useful for identifying confounding because they clearly depict the pathways through which variables are connected. Confounders are variables that influence both the treatment and the outcome, potentially creating a spurious association. By mapping out all relevant variables and their relationships, a DAG helps researchers see which variables need to be controlled for in order to obtain an unbiased estimate of the treatment effect.
+> In theory there is no difference between theory and practice. In practice there is. **Yogi Berra**
 
-```{r DAG0, echo=FALSE, fig.cap='Figure 1: Causal diagram - directed acyclic graph (DAG) where nodes are variables and arrows indicated directional causal relationships. Example of simple DAG where treatment affects (causes or influences) cardiac arrest.', out.width = '90%'}
-knitr::include_graphics("DAG0.png")
-```
+In order to offer a meaningful experience for readers across multiple fields, we have made use of tabs to separate conceptual overviews, notation, and a worked example in R. If you would like to learn the concepts but do not have a need to apply these methods, proceed by reading linearly. If you would like to see how these methods work in practice, use the "Notation" and "Worked Example" tabs.
 
-For example, let us consider a pseudo-real-life example: treatment A (taking the medication Axyza) is believed to reduce cholesterol. In our simpolified DAG, we represent this with two nodes: "treatment with Axyza" and "cholesterol," with an arrow pointing from "treatment with Axyza" to "cholesterol," indicating the causal relationship. 
+We have also provided additional resources for key terms from the field that not all readers will be familiar with. Hover over a hyperlink to see a definition, and use the hyperlinks to navigate to more in-depth background materials.[^1]
 
-Now, let's think a little more about the relationship between this treatment and outcome - let's say we know patients with previously high cholesterol are much more likely to be treated and that this prior level strongly influences subsequent levels. Additionally, age and gender are suspected to be be related to both treatment and outcome in our example. We say that these additional variables (confounders) influence both likelihood of receiving treatment and risk of having a heart attack.
+[^1]: Note on accessibility: This is the authors' first time using these formatting conventions in RMarkdown. If you are experiencing difficulty reading the article due to compatibility with assistive technologies, or for any other reasons, please reach out to the authors. We would be happy to provide you with an alternate format, and will incorporate feedback into future iterations of the work.
 
-We add those nodes and corresponding directed edges into our diagram. Our DAG can now guide us in adjusting for confounders through propensity scores, TMLE, or other statistical methods, so we can better isolate the true effect of the treatment.
+------------------------------------------------------------------------
 
-Our plausible DAG:
-
-```{r DAG1, echo=FALSE, fig.cap='Figure 2: DAG of working example where treatment affects cardiac events, but with 4 confounding variables', out.width = '90%'}
-knitr::include_graphics("DAG1.png")
-```
-
-***
-
-# Real World Data Study Design {.tabset .tabset-fade .tabset-pills}
-
-## External Control Arms
-
-text tk
-
-***
-
-## Observational Data and the `target trial`
-
-Unlike randomized controlled trials (RCTs), where random assignment of treatment ensures that treatment groups are comparable, observational studies must rely on study design and statistical techniques to account for differences between treated and untreated groups.
-
-One approach to estimating causal effects in observational studies is to emulate the conditions of a target randomized trial as closely as possible. This process, often referred to as “target trial emulation,” involves designing the observational study to mimic the hypothetical RCT that would answer the causal question of interest.
-
-***
-
-# Effects Estimates {.tabset .tabset-fade .tabset-pills}
-
-## Crude (Naive) Estimates 
-
-This is simple the apparent difference in means between treatment groups, ignoring all else. You can also think of this as the conditional mean difference: $$E[cholesterol|statin=1]-E[cholesterol|statin=0]$$
-
-***
-
-## Propensity Scores {.tabset }
-
-Propensity scores represent the probability that someone (e.g., a patient) receives a treatment given a set of observed covariates. The concept was introduced by Rosenbaum and Rubin in 1983, and provides an elegant and intuitive way to balance the distribution of covariates between treated and control groups. Historically, propensity scores have been a powerful tool in causal inference, used to control for confounding variables in observational studies.
-
-### Calculating a Propensity Score 
-
-A propensity score is the conditional probability of receiving a treatment given a set of observed covariates. Mathematically, it is defined as:
-
-$$ e(X) = P(T = 1 | X) $$
-
-where $T$ is the treatment indicator (1 for treated, 0 for control), and $X$ represents the observed covariates.
-
-***
-
-### Propensity Scores for Matching
-
-Propensity score matching involves pairing treated and control units with similar propensity scores. This technique aims to create a pseudo-randomized experiment by ensuring that the distribution of covariates is similar between the matched groups. Matching can significantly reduce selection bias, allowing for more accurate estimation of treatment effects. One related concept is that of *cohort imbalance*, which we're hoping to remedy by this method.
-
-***
-
-### Propensity Scores for Weighting
-
-Propensity score weighting involves assigning *weights* to each person based on their propensity score to create a *synthetic* (standardized) sample in which the distribution of covariates is balanced across treatment groups. The two common approaches are:
-
-1.  **Inverse Probability of Treatment Weighting (IPTW):** Each treated unit is weighted by the inverse of their propensity score, and each control unit is weighted by the inverse of one minus their propensity score. This method can be expressed as:
-
-    $$ w_i = \frac{T_i}{e(X_i)} + \frac{1 - T_i}{1 - e(X_i)} $$
-
-2.  **Stabilized Weights:** To prevent extreme weights that can lead to high variance, stabilized weights are used:
-
-    $$ w_i = \frac{T_i}{e(X_i)} \times \frac{P(T = 1)}{P(T = 1 | X)} + \frac{1 - T_i}{1 - e(X_i)} \times \frac{P(T = 0)}{P(T = 0 | X)} $$
-
-***
-
-### Limitations
-
-Note: There is considerable debate as to whether to use propensity scores for matching [(See King et. al. 2019)][kingetal] and we also tend to lean away from recommending this method, although it is very intuitive and tractable. Also, note that through this method we are estimating a variant of the average treatment effect: the *average treatment effect among the treated* (ATT).
-
-***
-
-## G-Computation {.tabset }
-
-G-computation, also known as the G-formula or G-estimation, is a very promising method also used to estimate the (unbiased) causal effect of a treatment or intervention.
-
-### What is G-Computation?
-
-G-computation involves using a statistical model to predict outcomes under different treatment scenarios. The key idea is to estimate what each individual's outcome would be under each possible treatment condition (even though we only observe them under one condition in reality). So we're using the observed data plus a statistical model to estimate counterfactual outcomes, and then using these counterfactual outcomes (providing a way to understand the causal effect of treatments)themselves) to estimate treatmnet effects.
-
-***
-
-### How G-Computation Works
-
-1.  **Modeling the Outcome:** First, a model is fitted to predict the outcome $Y$ based on the treatment $T$ and a set of covariates $X$. This model can be a regression model or it can be any machine learning model that can generate predicted outcomes!
-
-    $$ \widehat{Y} = f(T, X)  $$
-
-2.  **Predicting Counterfactuals:** Using the fitted model, predict the outcomes for each individual under different treatment scenarios. Specifically, predict the outcome for each individual if they had received the treatment and if they had not received the treatment.
-
-    $$ \widehat{Y}(T=1, X=x) $$ and $$ \widehat{Y}(T=0, X=x) $$
-
-3.  **Averaging the Predictions:** Calculate the average of the predicted outcomes for the treated and control scenarios across all individuals in the sample.
-
-$$ \text{ATE} = \frac{1}{N} \sum_{i=1}^{N} \left[ \widehat{Y_i}(T=1) - \widehat{Y_i}(T=0) \right] $$
-
-***
-
-### Estimating the Unseen Version of Each Person
-
-The essence of g-computation lies in its ability to estimate the "unseen" or counterfactual version of each person. For each individual in the study, g-computation estimates what their outcome would have been if they had received a different treatment than the one they actually received. This is done using the statistical model trained on the observed data:
-
--   **Counterfactual for Treated Individuals:** For individuals who received the treatment ($T=1$), g-computation predicts what their outcome would have been if they had not received the treatment ($T=0$).
--   **Counterfactual for Control Individuals:** Conversely, for individuals who did not receive the treatment ($T=0$), it predicts what their outcome would have been if they had received the treatment ($T=1$).
-
-By doing this for all individuals, g-computation fills in the missing potential outcomes under both treatment conditions, allowing for the estimation of causal effects. This approach also accounts for confounding factors and provides a very good estimate of the average treatment effect (ATE).
-
-***
-
-## Modern/Emerging Methods: TMLE {.tabset }
-
-### What is TMLE?
-
-Targeted Maximum Likelihood Estimation (tmle) and the broader statistical approach of Targeted Learning is perhaps the most promising method to be applied to real world data in recent times. It tends to be the best statistical method for a given study design for *washing out* bias by using a substitution estimator approach (starting with a g-computation estimator and deriving a fluctuation parameter from the propensity score and something called the `clever covariate`)
-
-```{r tmle, echo=FALSE, fig.cap='Figure 3: TMLE takes the same form as g-computation, but the red stars indicate an updated Q(1) and Q(0).', out.width = '90%'}
-knitr::include_graphics("tmle.png")
-```
-
-"A second chance to get it right" using the components we've introduced!
-
-See van der Laan and Rose (2011) for an excellent full course on Targeted Learning.
-
-***
-
-### How TMLE Works
-
-1.  **Initial Estimation:** Start with an initial estimate of the outcome model (similar to g-computation) and the propensity score model (IPTW).
-
-2.  **Clever Covariate:** Construct a "clever covariate," which is derived from the propensity score. The clever covariate helps target the estimator towards the parameter of interest, making the estimate more efficient.
-
-    $$ H(T, X) = \frac{T}{e(X)} - \frac{1 - T}{1 - e(X)} $$
-
-3.  **Fluctuation Parameter:** Incorporate a fluctuation parameter to adjust the initial estimate. This is done through a process called targeting, where the initial model is updated to reduce bias and improve efficiency.
-
-4.  **Targeted Estimate:** Combine the updated outcome model and the clever covariate to obtain the targeted estimate of the treatment effect. This final estimate is designed to be both unbiased and efficient.
-
-***
-
-### Advantages of TMLE
-
--   **Double Robustness:** TMLE provides valid estimates even if either the outcome model or the propensity score model is misspecified, but not both.
--   **Efficiency:** By incorporating the clever covariate and the fluctuation parameter, TMLE achieves higher efficiency compared to traditional methods.
--   **Robustness to Model Misspecification:** TMLE's targeted update step helps mitigate bias due to model misspecification, leading to more reliable causal inference.
-
-***
-
-# Worked Example
+## Introduction to the worked example
 
 In this demonstration, we'll:
 
-1)  Create (plausible) synthetic data so that we can know the ground truth effect we're trying to estimate,
-2)  Estimate the effect without any attempt to remedy confounding (to start with our baseline **biased** estimate),
-3)  Apply traditional (propensity scores and g-computation) and modern (TMLE and DML) statistical methods to recover the unbiased effect and compare these.
+1)  create (plausible) synthetic data so that we can know the ground truth effect we're trying to estimate;
+2)  estimate the effect without any attempt to remedy confounding (to start with our baseline **biased** estimate); and
+3)  apply and compare traditional (propensity scores, g-computation) and emerging (TMLE, DML) statistical methods to recover the unbiased effect.
 
-Let's dive in!
+We will be using an example scenario where the protective effect of statins (treatment) against high cholestoral (outcome) is obscured by confounding. Though we will be working with synthetic data in our example, this is a common and reproducible type of problem in public health.
+
+------------------------------------------------------------------------
 
 ## Libraries for today's R session
 
@@ -229,15 +82,67 @@ library(mlr3learners)
 set.seed(12345)
 ```
 
-## Synthetic Data and Ground Truth
+------------------------------------------------------------------------
 
-When we generate synthetic data, we have complete control over the data-generating process. This means we know the true causal effect of the treatment, allowing us to directly assess the accuracy and bias of our estimates.
+# The target trial {.tabset .tabset-fade .tabset-pills}
 
-By applying causal inference methods to synthetic data, we can evaluate their performance in recovering the known causal effect (as well as identifying and quantifying bias (we'll define $bias = true-estimated$)).
+## Overview
 
-### DAG-based data generation process
+<!-- Andy to adjust this section / split it out into overview + identifiability assumptions -->
 
-We're going to use a package called `simcausal` to create a hypothetical DAG and simulate data (directly) from that. A more traditional approach is to build up the nodes sequentially (see box 1 in <https://onlinelibrary.wiley.com/doi/epdf/10.1002/sim.7628> for example)
+<!-- What do you think of this going first? It provides a theoretical framework for how you are setting up - gives a space to offer key definitions - and then it won't interrupt the flow of the worked example to not have a worked example in this? -->
+
+Methods to estimate treatment effects in a population depend on exchangability, or approximating equivalent conditions and baseline characteristics between the treated and untreated groups. Because we can never actually know what the outcomes for a treated group would have been had all the individuals in the group remained untreated (the counterfactual), we depend on our untreated and treated groups being sufficiently similar, so that we can more more confidently assess causal effects of a treatment.
+
+Unlike in randomized controlled trials (RCTs), where random assignment of treatment ensures that treatment groups are comparable, observational studies rely on study design and statistical techniques to account for differences between treated and untreated groups. One approach to estimating causal effects in observational studies is to emulate the conditions of a target randomized trial as closely as possible. This process, often referred to as “target trial emulation,” involves designing the observational study to mimic the hypothetical RCT that would answer the causal question of interest.
+
+## Identifiability assumptions
+
+<!-- Andy to fill out -->
+
+------------------------------------------------------------------------
+
+# Directed acyclic graphs {.tabset .tabset-fade .tabset-pills}
+
+## Overview
+
+Causal graphs, specifically directed acyclic graphs (DAGs), are powerful tools used in epidemiology (and other fields) to visualize relationships between variables in a study. These graphs help researchers understand the causal pathways and identify potential confounders that could bias study results.
+
+A DAG is a graphical representation where nodes represent variables, and directed edges (unidirectional arrows) indicate causal relationships between these variables. The "acyclic" aspect means that there are no loops or cycles, ensuring a unidirectional flow of causality. Figure 1 shows a simple DAG where the only variables modeled are treatment (statins) and outcome (high cholestoral).
+
+------------------------------------------------------------------------
+
+<!-- still playing around with the designs of these -- for one thing, the scale is much too big right now. I'm wondering if handwriting wasn't better? -->
+
+```{r DAG0, echo=FALSE, fig.cap='Figure 1: Example of a simple DAG where treatment (statins) affects (causes or influences) outcome (cholestoral).', out.width = '60%'}
+knitr::include_graphics("fig-01-test.png")
+```
+
+------------------------------------------------------------------------
+
+DAGs are particularly useful for identifying confounding because they clearly depict the pathways through which variables are connected. Confounders (or *confounding variables*) are variables that influence both the treatment and the outcome, potentially creating a spurious association. By mapping out all relevant variables and their relationships, a DAG helps researchers see which variables need to be controlled for to obtain an unbiased estimate of the treatment effect.
+
+To better understand the relationship between treatment and outcome, lets consider a more complex model (see figure 2). Say we know patients with previously high cholesterol are much more likely to be treated with statins and that this prior cholestoral level strongly influences subsequent levels. Additionally, age and gender are suspected to be related to both treatment and outcome in our example. We say that these additional variables (confounders) influence both the likelihood of receiving treatment and the risk of having high cholestoral. We incorporate these additional variables (confounders) into our diagram, adding corresponding nodes and directed edges.
+
+DAGs like this can guide our analysis by identifying where we need to adjust for confounders, so we can better isolate the true effect of treatment (through methods like propensity scores or TMLE).
+
+------------------------------------------------------------------------
+
+```{r DAG1, echo=FALSE, fig.cap='Figure 2: Example of a DAG where treatment (statins) affects outcome (cholestoral), and three confounding variables (age, prior cholestoral, gender) affect both treatment and outcome.', out.width = '60%'}
+knitr::include_graphics("fig-02-test.png")
+```
+
+------------------------------------------------------------------------
+
+## Worked example: Generating synthetic data
+
+#### Synthetic Data and Ground Truth
+
+When we generate synthetic data, we have complete control over the data-generating process. This means we know the true causal effect of the treatment, allowing us to directly assess the accuracy and bias of our estimates. By applying causal inference methods to synthetic data, we can evaluate their performance in recovering the known causal effect (as well as identifying and quantifying bias).
+
+#### DAG-based data generation process
+
+We're going to use a package called `simcausal` to create a hypothetical DAG and simulate data (directly) from that. [(A more traditional approach is to build up the nodes sequentially, see box 1 in the linked tutorial.)](https://onlinelibrary.wiley.com/doi/epdf/10.1002/sim.7628 "For an example of creating simulated data by sequentially building up nodes, see box 1 in this tutorial for TMLE by Luque‐Fernandez et al.")
 
 ```{r}
 D_AW <- DAG.empty() + 
@@ -250,10 +155,9 @@ D_AW <- DAG.empty() +
 D_AW_set <- set.DAG(D_AW)
 ```
 
+<!-- Let's look at our DAG (notice interesting configuration of counterfactuals and outcome) *are counterfactuals being used the same as confounders here? -->
 
-
-
-<!-- Let's look at our DAG (notice interesting configuration of counterfactuals and outcome) -->
+Using `plotDAG`, let's take a look at the resulting DAG. Notice the interesting configuration of treatment, outcome, and confounders here.
 
 ```{r}
 
@@ -261,15 +165,14 @@ plotDAG(D_AW_set, xjitter = 0.3, yjitter = 0.3)
 
 ```
 
-### Generate synthetic data
+#### Generate synthetic data
 
-Now let's generate some data (let's start with n = 5000)
+Using this DAG, let's now generate some data, starting with n = 5000. <!-- Depending on level of experience you're assuming from the reader, I think this could stand to have a sentence or two explaining the process here. -->
 
 ```{r}
 ObsData <- sim(DAG = D_AW_set, n = 5000, rndseed = 12345)
 head(ObsData)
 ```
-
 
 ```{r}
 
@@ -287,20 +190,78 @@ Y0 <- Xdat1[["A0"]][,"cholesterol" ]
 
 ```
 
+Notice we have created the *full* dataset! We have the (usually unavailable) [Y(1) and Y(0)](https://www.stat.cmu.edu/~larry/=sml/Causation.pdf "The counterfacutals Y(1) and Y(0) represent modeled outcomes for the treated and untreated populations. If you are unfamiliar with this notation, see the linked class notes for causal inference from Larry Wasserman at CMU.") as well as the observed Y.
 
+------------------------------------------------------------------------
 
+## Bonus: Prettier DAGs with `ggdag`
 
+Notice that the DAG produced in our worked example included lines crashing on the labels, and compressed type. For more stylish (and accessible) DAGs, consider using the `ggdag` package:
 
+```{r}
+theme_set(theme_dag())
 
-Notice we have created the *full* dataset! We have the usually unavalable Y(1) and Y(0) as well as observed Y.
+D_AW_DAG <- dagify(Y ~  A + W1 + W2 + W3 ,
+                   A ~ W1 + W2 + W3,
+                   W3 ~ W1,
+                   labels = c("Y" = "Cholesterol", 
+                              "A" = "Statins",
+                              "W1" = "Age",
+                              "W2" = "Gender",
+                              "W3" = "Prior Cholesterol"),
+                   exposure = "A",
+                   outcome = "Y")
+ggdag(D_AW_DAG, text = TRUE, use_labels = "label")
+```
 
-## Bias
+The package offers a range of styles and controls, available in [the reference PDF](https://cran.r-project.org/web/packages/ggdag/ggdag.pdf "See style options for the ggdag package here."). We can also use `ddag` to control for partcular variables. In the example below, we adjust for "W1". <!-- If I'm understand the intent of controlling for, it looks to me like you selected the wrong confounder -- W3 rather than W1 -- if not, what is control for meaning? -->  
 
-Now let's take a look at the *apparent* (naive) estimate of average treatment effect: $\widehat{ATE}$ = $\widehat{\psi}$ = E[Y\|A=1] - E[Y\|A=0]).
+```{r}
+# control_for(D_AW_DAG, var = "W1")
+ggdag_adjust(D_AW_DAG, var = "W3")
+```
 
-We'll compare this to the *true* ATE: ψ = E[Y(1)] - E[Y(0)]. (note we can only do this latter step because we have generated Y(1) and Y(0))
+------------------------------------------------------------------------
 
-[Think "*conditional* A" vs. "*do* A."]
+# Bias and average treatment effect {.tabset .tabset-fade .tabset-pills}
+
+## Overview
+
+Bias refers to systematic errors (e.g., confounders) that distort relationship between variables, leading to incorrect conclusions about causality. Here we will define it as `bias = true - estimated`. An estimator is said to be unbiased if its bias is zero.
+
+The *apparent* (naive) estimate of [average treatment effect](https://www.stat.cmu.edu/~larry/=sml/Causation.pdf "A positive treatment effect implies treatment is associated with higher risk of the outcome, while a negative treatment effect implies treatment is associated with decreased risk of the outcome. If you are unfamiliar with the concept of average (mean) treatment effect, see the linked class notes for causal inference from Larry Wasserman at CMU.") (ATE) is calculated by directly taking the difference between the observed risk of outcome in the treated group and the observed risk of outcome in the untreated group (without correcting for bias). The *true* ATE is calculated by taking the difference between risk of counterfactual outcomes for the treated versus the risk of counterfactual outcomes for the untreated groups. By considering counterfactuals (calculated) rather than observed (actual) outcomes, we correct for bias. (Think of "*conditional* A" vs. "*do* A.")
+
+In an actual study setting, you would not be able to so easily calculate *true* ATE (or bias) because you would not know the counterfactual outcomes. In our worked example, whichwe will be able to calculate both naive and true ATE because we are using synthetic data that generates counterfactual outcomes. This will allow us to compare results and see how good our traditional and emerging methods are at correcting for bias.
+
+------------------------------------------------------------------------
+
+## Notation
+
+The *apparent (naive) estimate of average treatment effect* is defined as:
+
+$$\widehat{ATE} = \widehat{\psi} = E[Y|A=1] - E[Y|A=0]$$ where $E[Y|A]$ represents the risk of outcome $Y$ given a treatment value $A$ (1 = treated, 0 = untreated).
+
+The *true ATE* is defined ad:
+
+$$ATE = \psi = E[Y(1)] - E[Y(0)]$$
+
+where $E[Y(i)]$ represents the risk of outcome $Y$ given counterfactual treatment $A = i$.
+
+From the apparent (naive) estimate of the ATE and the true ATE, *bias* can be defined as:
+
+$$bias = ATE - \widehat{ATE} = \psi - \widehat{\psi}$$
+
+where $\psi$ is the target parameter (in this case ATE).
+
+*Percent bias* is defined here as:
+
+$$\% bias =\frac{\widehat{\psi} - \psi }{\psi} * 100\%$$
+
+------------------------------------------------------------------------
+
+## Worked example
+
+Let's take a look at the apparent (naive) estimate of average treatment effect in our cholesterol example. We will compare this to the *true* ATE (a value we can only calculate because our synthetic data generated Y(1) and Y(0)).
 
 ```{r}
 treat <- ObsData %>% filter(statin == 1) %>% select(cholesterol) 
@@ -317,29 +278,50 @@ controls <- ObsData %>% filter(statin == 0) %>% select(cholesterol)
 (naive_est-True_ATE)/True_ATE*100
 ```
 
-We define percent **bias** as:
-
- $$\% bias =\frac{\widehat{\psi} - \psi }{\psi} * 100\%$$  
-
 So our bias in the above example is `r round((naive_est-True_ATE)/True_ATE*100,4)`%.
 
-An estimator is said to be unbiased if its bias is zero.
+<!-- In our simulation experiments we'll define the bias of an estimator as expected (or mean) difference between estimator and true value. -->
 
-In our simulation experiments we'll define the bias of an estimator as expected (or mean) difference between estimator and true value.
+------------------------------------------------------------------------
 
-## Traditional methods
+# Traditional methods for effects estimates
 
-All right. Let's get down to business removing this bias and getting the estimate we *would have gotten* from a (target) randomized trial. We'll apply 4 ( + naive) methods to remove bias:
+## Crude (naive) estimates {.tabset .tabset-fade .tabset-pills}
 
-1)  naive estimate with no adjustment
-2)  propensity score (matching and weighting)
-3)  g-computation
-4)  targeted maximum likelihood (tmle)
-5)  double machine learning (dml)
+### Overview
 
-### No methods at all (aka crude (naive) estimate)
+Crude (naive) estimates provide a basic understanding of the association between treatment and outcome (without correcting for bias) by evaluating the apparent difference in means between treatment groups, ignoring all else. You can also think of this as the conditional mean difference, without adjustments for covariates. 
 
-It's good to plant our flag and see how bad it is if we don't do anything about bias (you'll see we just recover the initial biased estimate, but it should help level-set).
+Due to the synthetic nature of our data, in the worked example, this will look in the same as our naive estimate of ATE calculated in the last section. However, in a real world setting this would differ because . . . 
+
+<!-- specify how this differs from apparent ATE can this be consolidated with the bias calculations? Or just say: note that we are breaking this out, but it's really the same as the naive estimate of ATE  -->
+
+------------------------------------------------------------------------
+
+### Notation
+
+<!-- Andy: it isn't obvious to me from this formula how this differs from ATE - can we explain that directly? / I'm wondering if this formula is complete? -->
+
+<!-- Do we want to look at other crude estimates that we could use, or is mean difference the only estimate you would really look at ? -->
+
+The **conditional mean difference** for our worked example is defined as:
+
+$$CMD = E[cholesterol|statin=1]-E[cholesterol|statin=0]$$
+
+Note that this is different from the apparent (naive) estimate of ATE because ...
+
+------------------------------------------------------------------------
+
+### Worked example
+
+All right. Let's get down to business removing this bias and getting the estimate we *would have gotten* from a (target) randomized trial. To begin, we will calculate the crude (naive) estimate, without adjustment, before applying four methods to remove bias:
+
+1)  Propensity score (matching and weighting)
+2)  G-computation
+3)  TMLE
+4)  DML
+
+It's good to plant our flag and see how bad it is if we don't do anything about bias. (You'll see we just recover the initial biased estimate, but it should help level-set.)
 
 ```{r}
 naive <- glm(cholesterol ~ statin, data = ObsData)
@@ -347,18 +329,63 @@ summary(naive)
 
 ```
 
-As we can see, we get the biased estimate by regression (statin coefficient = `r round(naive$coefficients["statin"],4)`)
+As we can see, by regression, we get get the same biased estimate (statin coefficient = `r round(naive$coefficients["statin"],4)`) that we calculated earlier via apparent (naive) average treatment effect. So, our initial percent bias from simple (unadjusted) regression is `r round((naive$coefficients["statin"]-True_ATE)/True_ATE*100,2)`% (the same value we calculated using $ATE$ and $\widehat{ATE}$.
 
-So our initial percent bias from simple (unadjusted) regression is `r round((naive$coefficients["statin"]-True_ATE)/True_ATE*100,2)`%.
+<!-- Again, a question of why we are calculating this if it's the same as what we got from ATE? - put the difference in the conceptual overview? -->
 
+------------------------------------------------------------------------
 
+## Propensity Scores
 
+###  {.tabset .tabset-fade .tabset-pills}
 
-### Using Propensity Scores for Matching
+#### Overview
 
-We'll use the `tableone` package:
+Introduced by [Rosenbaum and Rubin in 1983](https://academic.oup.com/biomet/article/70/1/41/240879 "Rosenbaum, P. R., & Rubin, D. B. (1983). 'The central role of the propensity score in observational studies for causal effects,' Biometrika, 70(1), 41-55: 'The propensity score is the conditional probability of assignment to a particular treatment given a vector of observed covariates. Both large and small sample theory show that adjustment for the scalar propensity score is sufficient to remove bias due to all observed covariates...'"), propensity scores evaluate the conditional probability that someone (e.g., a patient) receives a treatment given a set of observed covariates. Historically, propensity scores have been a powerful tool used in observational studies to control for confounding variables. The concept provides an elegant and intuitive way to balance the distribution of covariates between treated and untreated (control) groups.
 
-Remember, we identified age, gender and prior cholesterol as potential confounders.
+------------------------------------------------------------------------
+
+#### Notation
+
+The propensity score is defined as:
+
+$$ e(X) = P(T = 1 | X) $$
+
+where $T$ represents the treatment indicator (1 for treated, 0 for untreated), and $X$ represents the set of observed covariates. *Note that by convention both A and T can be used to represent treatment, though A is typically used for continuous or categorical treatment, and T is often used to indicate a binary treatment.*
+
+<!-- Andy: should we just use either A or T throughout to make it less confusing? (or do the T vs. A indicate something different that I missed?) -->
+
+------------------------------------------------------------------------
+
+### Propensity Scores for Matching {.tabset .tabset-fade .tabset-pills}
+
+#### Overview
+
+<!-- for consistency, since we are using "control" groups here -- should we use control rather than (untreated) in earlier sections, and indicate on first use that control likely means untreated? -->
+
+Propensity score matching involves pairing units (individuals) between treated and control (untreated) groups with similar propensity scores. This technique aims to create a pseudo-randomized experiment by ensuring a similar distribution of covariates between the two matched groups. [Given the appropriate selection of covariates](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC1513192/ "For a discussion of methods for better selecting covariates for propensity scores, see Brookhart et al (2007), 'Variable selection for propensity score models'."), matching can allow for more accurate estimation of treatment effects by significantly reducing [selection bias](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2780010/ "Selection bias in observational studies arises when a a selection of individuals from a population does not represent a random selection from the target population. See Hammer et al (2009) 'Avoiding Bias in Observational Studies' for further discussion.") and *cohort imbalance* (unequal distribution of covariates between treated and control groups).
+
+Although propensity score matching has been historically important, contemporary debates question whether propensity scores should be used for matching [(see King et. al. 2019)](https://gking.harvard.edu/publications/why-propensity-scores-should-not-be-used-formatching "King, G., & Nielsen, R. 2019. 'Why Propensity Scores Should Not Be Used for Matching,' Political Analysis, 27(4), 435-454: 'We show that propensity score matching (PSM), an enormously popular method of preprocessing data for causal inference, often accomplishes the opposite of its intended goal --- thus increasing imbalance, inefficiency, model dependence, and bias. The weakness of PSM comes from its attempts to approximate a completely randomized experiment, rather than, as with other matching methods, a more efficient fully blocked randomized experiment...'"). We tend to lean away from recommending this method, although it is very intuitive and tractable.
+
+------------------------------------------------------------------------
+
+#### Notation
+
+In our worked example for propensity score matching, we will use a variant of the average treatment effect: the **average treatment effect among the treated** **(ATT)**, defined as:
+
+$$ATT = E[Y(1) - Y(0)|T = 1]$$ where the difference between the counterfactual outcomes $Y(1)$ and $Y(0)$ are only compared within the treatment group $(T=1)$.
+
+To quantify mean values of covariates across treatment groups, we will also use the **standard mean difference (SMD)**, defined as:
+
+$$SMD = \frac{\widehat{X(1)}-\widehat{X(0)}}{s_p}$$
+
+where $\widehat{X(t)}$ is the mean value of the covariate in the group $T=t$ and $s_p$ is the pooled standard deviation.
+
+------------------------------------------------------------------------
+
+#### Worked example
+
+Recall that when drawing our initial DAG, we identified three potential confounders: age, gender, and prior cholesterol. Let's use the `tableone` package to evaluate the standard mean difference (SMD) across treatment groups for each of these covariates:
 
 ```{r}
 xvars<-c("age","gender","priorchol")
@@ -370,7 +397,9 @@ table1<- CreateTableOne(vars=xvars, strata="statin", data=ObsData )
 print(table1, smd=TRUE)
 ```
 
-Wow – dramatic difference in gender and prior-cholesterol. A typical metric is the standardized mean difference (SMD) and a heuristic for balance is a SMD \<0.1.
+Wow - look at the difference! There is a dramatic variation in SMD for gender and age compared to that for prior-cholesterol. (For reference, when evaluating distribution of covariates across treatment groups, a heuristic for balance is $SMD < 0.1$.) It is clear from these calculations that selection bias and cohort imbalance are at play in our data.
+
+Now, let's use `matchit` to apply propensity score matching:
 
 ```{r}
 propensity_model <- matchit(statin ~ age + gender + priorchol, 
@@ -381,16 +410,17 @@ propensity_model <- matchit(statin ~ age + gender + priorchol,
 bal.tab(propensity_model, m.threshold=0.1)
 ```
 
-
-#### Examine matching triage
+And we'll use `propensity model` to inspect the results:
 
 ```{r}
 print(plot(propensity_model, type = 'jitter'))
 ```
 
-We notice we're now pretty balanced (but lost some friends along the way - for this analysis, we'd be dropping all the *unmatched* people.)
+You'll notice that our groups are now pretty well balanced, although we lost some friends along the way. (For this analysis, we dropped all the *unmatched* people.)
 
-#### Extract matches and analyze:
+<!-- are there cases where you wouldn't drop the unmatched people? -->
+
+Let's extract the matches, so we can re-evaluate treatment effect in matched groups (using ATT):
 
 ```{r}
 md <- match.data(propensity_model)
@@ -405,22 +435,50 @@ summary(adjusted.PSmatch)
 
 ```
 
-You'll notice now we're closer to the *true* value (`r round(adjusted.PSmatch$coefficients["statin"], 4)` vs true value = `r round(True_ATE, 4)`).
+You'll notice that the effects estimate we calculated here is much to the *true* treatment effect we initially calculated (`r round(adjusted.PSmatch$coefficients["statin"], 4)` vs `r round(True_ATE, 4)`).
 
-#### Using Propensity Scores for Weighting
+------------------------------------------------------------------------
 
-Let's use the `WeightIt` package to recalculate weights (both non-stabilized and stabilized).
+### Propensity Scores for Weighting {.tabset .tabset-fade .tabset-pills}
+
+#### Overview
+
+[Propensity score weighting](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC8757413/ "For a more in-depth introduction to this method, see Chesnaye et al. (2022) 'An introduction to inverse probability of treatment weighting in observational research'") involves assigning weights to each individual based on their propensity score to create a synthetic (standardized) sample in which the distribution of covariates is balanced across treatment groups. The effect is that the apparent sample size of each group and the impact of each individual's outcome on the average treatment effect will be weighted depending on propensity score. <!-- fix wording of this last sentence -->
+
+There are two methods commonly used for calculating propensity score weights: **inverse probability of treatment weighting (IPTW)** and **stabilized weights.** For both methods, each unit of treated group is weighted by the inverse of their propensity score; each unit of the control population is weighted by the inverse of one minus their propensity score. If there are extreme propensity scores, and therefore extreme weights, inverse probability weighting leads can lead to high variance. In such cases, stabilized weights can be used instead. Stabilized weights are calculated with an additional factor: the marginal probability of treatment.
+
+------------------------------------------------------------------------
+
+#### Notation
+
+Non-stabilized weight for traditional **inverse probability of treatment weighting (IPTW)** is expressed as:
+
+$$ w_i = \frac{T_i}{e(X_i)} + \frac{1 - T_i}{1 - e(X_i)} $$
+
+where $w_i$ represents weight, $T_i$ represents the treated individuals, $1-T_i$ represents the untreated individuals, and $e(X_i)$ represents propensity score.
+
+**Stabilized weight** is expressed as:
+
+$$ w_i = \frac{T_i}{e(X_i)} \times \frac{P(T = 1)}{P(T = 1 | X)} + \frac{1 - T_i}{1 - e(X_i)} \times \frac{P(T = 0)}{P(T = 0 | X)} $$
+
+where $P(T=t)$ represents the marginal probability of treatment.
+
+------------------------------------------------------------------------
+
+#### Worked example
+
+Returning to our original data set, let's use the `WeightIt` package to recalculate weights. First we will calculate non-stabilized and apply them to the data:
 
 ```{r}
 # Calculating non-stabilized weights
-w.out.ns <- weightit(cholesterol ~ age + gender + priorchol, data = ObsData, method = "ps", estimand = "ATE")
+w.out.ns <- weightit(cholesterol ~ age + gender + priorchol, data = ObsData, method = "ps", estimand = "ATE", stabilize = FALSE)
 summary(w.out.ns)
 
 # Adding weights to data
 ObsData$weights_ns <- w.out.ns$weights
 ```
 
-And again for stabilized weights:
+And then again for stabilized weights:
 
 ```{r}
 # Calculating stabilized weights
@@ -431,25 +489,83 @@ summary(w.out.st)
 ObsData$weights_st <- w.out.st$weights
 ```
 
+<!-- Andy: are the results the same because the extremes weren't all that extreme -- am I right in reading the results as the same? Could we touch on why that is? -->
+
+Notice that at a glance these results appear the same.
+
+Now we will use `svydesign` to generate data for treated and control groups based on our weighted data, and from those groups, we will calculate ATE. First for non-stabilized weights:
+
 ```{r}
 # Creating survey design objects
 design_ns <- svydesign(ids = ~1, weights = ~weights_ns, data = ObsData)
-design_st <- svydesign(ids = ~1, weights = ~weights_st, data = ObsData)
 
 # Estimating ATE using non-stabilized weights
 ate_ns <- svyglm(cholesterol ~ statin, design = design_ns)
 summary(ate_ns)
+```
+
+And again for stabilized weights:
+
+```{r}
+# Creating survey design objects
+design_st <- svydesign(ids = ~1, weights = ~weights_st, data = ObsData)
 
 # Estimating ATE using stabilized weights
 ate_st <- svyglm(cholesterol ~ statin, design = design_st)
 summary(ate_st)
 ```
 
-nice - both of these coefficients are  close to the `true` value.
+Remember that the *true* treatment effect we calculated using $Y(0)$ and $Y(1)$ was `r round(True_ATE, 4)`%. Both stabilized and non-stabilized weights get us very close to this ATE (`r round(ate_st$coefficients["statin"], 4)`% and `r round(ate_ns$coefficients["statin"], 4)`% respectively) -- even closer than propensity score matching got us.
 
-### G-Computation
+------------------------------------------------------------------------
 
-We can use the `SuperLearner` package to calculate expected outcomes and then set treatment to 0 and 1 for each individual to generate $\widehat{Y_i}(T=0)$ and $\widehat{Y_i}(T=1)$ (which we'll call Q_0 and Q_1).
+## G-computation {.tabset .tabset-fade .tabset-pills}
+
+### Overview
+
+Introduced by James Robins in 1986 to address limitations of traditional causal effects estimates, particularly in longitudinal studies, g-computation (also known as the g-formula or g-estimation) is a very promising method used to estimate true treatment effect in complex settings where variables may vary over time.
+
+[G-computation](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6074945/ "For a more in-depth introduction to g methods, see Naimi et al (2016) 'https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6074945/'") involves using a statistical model to predict outcomes under different treatment scenarios. The key idea is to estimate what each individual's outcome would be under each possible treatment condition (even though we only actually observe them under one condition). These estimated outcomes are called counterfactual outcomes.
+
+The essence of g-computation lies in its ability to estimate the "unseen" (counterfactual) version of each individual (ie, what an individual's outcome would have been had they received a different treatment than the one they actually received), accomplished by using a statistical model trained on the observed data. This approach accounts for confounding factors and provides a very good estimate of the average treatment effect.
+
+There are three steps to g-computation:
+
+1.  **Modeling the outcome:** First, a model is fitted to predict the outcome based on the treatment and a set of covariates. This model can be a regression model or it can be any machine learning model that can generate predicted outcomes.
+
+2.  **Predicting counterfactuals:** Using the fitted model, predict the outcomes for each individual under different treatment scenarios. Specifically, predict the outcome for each individual if they had received the treatment and if they had not received the treatment.
+
+3.  **Averaging the predictions:** Calculate the average of the predicted outcomes for the treated and control scenarios across all individuals in the sample to determine an (unbiased) ATE.
+
+------------------------------------------------------------------------
+
+### Notation
+
+Actual outcome and counterfactual outcome for treated individuals ($T=1$) are represented by: $$Y, {Y}(0)$$ where $Y$ represents the actual outcome and Y(0) represents the counterfactual treatment had they not received treatment ($T=0$).
+
+Actual outcome and counterfactual outcome for individuals who did not receive treatment ($T=1$) are represented by:
+
+$$Y, {Y}(1)$$ where $Y(1)$ represents the counterfactual treatment had they received treatment ($T=1$).
+
+Mathematically, the three steps of g-computation can be written as:
+
+1.  **Modeling the outcome** (where f represents the fitted model, $\widehat Y$ represents estimated outcome, $T$ represents actual treatment, and $X$ represents a set of covariates)
+
+    $$ \widehat{Y} = f(T, X)  $$
+
+2.  **Predicting counterfactuals**
+
+    $$ Q_1 = \widehat{Y}(T=1, X=x) \text{   and   } Q_0 = \widehat{Y}(T=0, X=x) $$
+
+3.  **Averaging the predictions**
+
+$$ \text{ATE} = \frac{1}{N} \sum_{i=1}^{N} \left[ \widehat{Y_i}(T=1) - \widehat{Y_i}(T=0) \right] $$
+
+------------------------------------------------------------------------
+
+### Worked example
+
+Returning to our original data set, we want to generate $\widehat{Y_i}(T=0)$ and $\widehat{Y_i}(T=1)$ (which we'll call $Q_0$ and $Q_1$). Let's start by using the `SuperLearner` package to calculate expected outcomes.
 
 ```{r}
 # Define Super Learner libraries
@@ -459,44 +575,137 @@ Obs <- ObsData %>% dplyr::select(statin, cholesterol,age, gender, priorchol)
 # Extract outcome and covariates
 Y <- Obs$cholesterol
 W_A <- Obs %>% dplyr::select(-cholesterol) 
-# Step 1: Outcome regression using Super Learner
+```
+
+Now we will begin g-computation by *modeling the outcomes (step 1)*:
+
+```{r}
+# Outcome regression using Super Learner
 Q <- SuperLearner(Y = Y,  
                   X = W_A,  
                   SL.library = sl_libs)
 
 
 Q_A <- as.vector(predict(Q)$pred)
+```
 
+Next we'll set `treatment` to 0 and then 1 for each individual and *predict counterfactuals (step 2)*:
+
+```{r}
 # Predict Q for treated (A = 1) and untreated (A = 0)
 W_A1 <- W_A %>% mutate(statin = 1)  # Set A = 1
 Q_1 <- as.vector(predict(Q, newdata = W_A1)$pred)
 
 W_A0 <- W_A %>% mutate(statin = 0) # Set A = 0
 Q_0 <- as.vector(predict(Q, newdata = W_A0)$pred)
+```
 
+Finally we will *average the predictions (step 3)*:
+
+```{r}
 # Create dataset for g-computation
 dat_g.comp <- as.data.frame(cbind(Y = Obs$cholesterol, A = Obs$statin, Q_A, Q_0, Q_1))
 ```
 
-Now the g-computation estimate of the ATE is simply the average difference of Q_1 - Q_0:
+The g-computation estimate of the ATE is simply the average difference of $Q_1$ and $Q_0$:
 
 ```{r}
 (ate_gcomp <- mean(dat_g.comp$Q_1 - dat_g.comp$Q_0))
 ```
 
-Very nice!
+Nice! This is *very* close to the *true* ATE. let's pause and take a look at how it compares to the four other treatment estimates we have calculated thus far:
 
-## Modern/emerging methods
+| Method                                             |                            ATE (or ATT)                            |
+|---------------------------------------------------|:-------------------:|
+| *true* (baseline ref)                              |                      `r round(True_ATE, 4)`%                       |
+| crude (naive) estimate                             | `r round((naive$coefficients["statin"]-True_ATE)/True_ATE*100,2)`% |
+| propensity score matching                          |       `r round(adjusted.PSmatch$coefficients["statin"], 4)`%       |
+| propensity score weighting (stabilized weight)     |            `r round(ate_st$coefficients["statin"], 4)`             |
+| propensity score weighting (non-stabilized weight) |            `r round(ate_ns$coefficients["statin"], 4)`             |
+| g-computation                                      |  `r round(ate_gcomp <- mean(dat_g.comp$Q_1 - dat_g.comp$Q_0), 4)`  |
 
-### TMLE
+## Summary
 
-We'll recalculate the propensity score again (this time also using an ensemble machine learning approach (SuperLearning)) and then use the g-computation we applied previously:
+[tk?]
 
--   Step 1: Estimate the outcome:
+<!-- Is it worth adding a few thoughts comparing the methods and addressing their shortcomings to lead into Modern emerging methods? -->
 
-Done. This is the g-computation step.
+<!-- If we add this, should we move the summary ATE table into this section? -->
 
--   Step 2a: Estimate the propensity score:
+# Emerging methods for effects estimates
+
+Targeted Learning emerged as a framework in the early 2000s, led by the work of Mark van der Laan and xxx. <!-- how to word that/acknowledge him --> The field uses machine learning with causal inference, to provide more robust, data-adaptive methods for estimating treatment effects, and offers the most promising methods to *wash out bias* and get to the true treatment effect. The central technique of Targeted learning is targeted maximum likelihood estimation (TMLE).
+
+See [van der Laan and Rose (2011)](https://ctml.berkeley.edu/publications/targeted-learning-causal-inference-observational-and-experimental-data-0 "van der Laan, M. J., & Rose, S. (2011). 'Targeted Learning: Causal Inference for Observational and Experimental Data.' Springer: 'The statistics profession is at a unique point in history. The need for valid statistical tools is greater than ever; data sets are massive, often measuring hundreds of thousands of measurements for a single subject. The field is ready to move towards clear objective benchmarks under which tools can be evaluated. Targeted learning allows (1) the full generalization and utilization of cross-validation as an estimator selection tool so that the subjective choices made by humans are now made by the machine, and (2) targeting the fitting of the probability distribution of the data toward the target parameter representing the scientific question of interest...'") for an excellent full course on Targeted Learning.
+
+## Targeted maximum likelihood estimation {.tabset .tabset-fade .tabset-pills}
+
+### Overview
+
+Like g-computation, TMLE uses a *substitution estimator approach* to approximate counterfactual outcomes in order to evaluate ATE. However, TMLE takes the estimations further by using flexible machine learning algorithms to derive *a fluctuation parameter* from the propensity scores and calculate a *clever covariate* from the initial estimates. These tools are then used to update the initial estimates, aligning them more closely to the target parameter (eg, ATE) - "a second chance to get it right" using the components we've introduced!
+
+There are four steps to TMLE:
+
+1.  **Select a target parameter:** Define the specific causal effect of interest (e.g. ATE).
+
+2.  **Calculate the initial estimates:** Using machine learning, create two initial estimates:
+
+    -   an outcome model (similar to step one of g-computation)
+
+    -   a propensity score (using IPTW)
+
+3.  **Construct the clever covariate:** Using the propensity score, derive a *clever covariate* to direct the estimate towards the target parameter.
+
+4.  **Choose a fluctuation parameter:** <!-- Can we add a phrase like "using..." to explain how the fluctuation parameter is chosen" --> Select a fluctuation parameter that can be used to minimize loss between the observed and updated models.
+
+5.  **Compute the targeted estimate:** Using a process called targeting, which makes use of the fluctuation parameter, update the initial outcome model to reduce bias and improve efficiency. Combine the updated outcome model and the clever covariate to obtain the targeted estimate of the treatment effect that, by design, is be both unbiased and efficient.
+
+```{=html}
+<!-- chatgbt added this step: Inference:
+
+Construct confidence intervals and perform hypothesis tests based on the targeted estimates. TMLE provides valid statistical inference by accounting for the uncertainty in both the initial and targeted steps.
+
+do we want to include some version of it, to add value to the method / or is that pretty well covered in our key advantages section just below? -->
+```
+Though the resulting ATE may appear similar to our traditional methods, there are three key advantages to using TMLE that make it an invaluable tool:
+
+1.  **Double robustness:** TMLE provides valid estimates even if either the outcome model or the propensity score model is misspecified (but not both).
+
+2.  **Efficiency:** By incorporating both the clever covariate and the fluctuation parameter, TMLE achieves higher efficiency compared to traditional methods.
+
+3.  **Robustness to model misspecification:** TMLE's targeted update step helps mitigate bias due to model misspecification, leading to more reliable causal inference.
+
+### Notation
+
+The **estimated outcome regression** is represented as:\
+$$Q(T,X) = E[Y∣T,X]$$ where $E$ represents the original outcome regression model, $T$ is treatment value, and $X$ is a set of covariates. The **estimated propensity score** is represented by:
+
+$$e(X) = P[T∣X]$$ where $P$ is the original propensity score and $e(X)$ is estimated propensity score.
+
+The **clever covariate** is defined as:
+
+$$ H(T, X) = \frac{T}{e(X)} - \frac{1 - T}{1 - e(X)} $$ 
+
+The *updated outcome estimate* is defined as:
+
+$$Q^{\star}(T,X) = Q(T,X) + \epsilon H(A,X)$$ where $\epsilon$ is the fluctuating parameter.  
+Recall that we represented **g-computation** as:
+
+$$\Psi_n = \frac{1}{n}\sum_{i=1}^{n}{Q_n(1,w_i)}-\frac{1}{n}\sum_{i=1}^{n}Q_n(0,w_i)$$
+
+where $\Psi$ is ATE, $w_i$ is weight, and $1$ or $0$ represent the treated and untreated groups.  
+Similarly, **TMLE** can be represented by:
+
+$$\Psi_n^{trade} = \frac{1}{n}\sum_{i=1}^{n}{Q_n^{\star}(1,w_i)}-\frac{1}{n}\sum_{i=1}^{n}Q_n^{\star}(0,w_i)$$ Notice that this takes the same form as g-computation, but the $\star$ symbols indicate the updated counterfactual outcomes $Q(1)$ and $Q(0)$. <!-- chatgbt gave me X_i rather than w_i in this formula -- can you confirm if w is representing weight or covariates (or either, since weight depends on covariates?) -->
+
+<!--
+We should be using text wherever possible rather than images so that it's readable by assistive technologies.-->
+
+### Worked example
+
+Let's turn back again to our initial data to model TMLE from start to finish. We'll start by identifying our target parameter: ATE. (Step 1 done!)
+
+For step 2, we need to calculate an outcome model and a propensity score. For both of these, we can follow the steps from g-computation, using <!-- originally you had "add superlearning" but we actually used SuperLearner in the gcomp example --> the ensemble machine learning approach `SuperLearning` to calculate propensity score.
 
 ```{r}
 # Propensity score estimation using Super Learner
@@ -509,7 +718,7 @@ g <- SuperLearner(Y = A,
 g_w <- as.vector(predict(g)$pred)
 ```
 
--   Step 2b: Estimate the clever covariate
+Now let's calculate the *clever covariate* (step 3) and define a *fluctuation parameter* (step 4):
 
 ```{r}
 
@@ -527,8 +736,6 @@ dat_tmle <-
                          A == 0 ~ H_0))  # if A is 0 (not treated), assign H_0
 ```
 
--   Step 3: Estimate the Fluctuation Parameter
-
 ```{r}
 glm_fit <- glm(Y ~ -1 + offset(Q_A) + H_A, 
                data=dat_tmle)
@@ -536,7 +743,7 @@ glm_fit <- glm(Y ~ -1 + offset(Q_A) + H_A,
 (eps <- coef(glm_fit))
 ```
 
--   Step 4: Update the Initial Estimates of the Expected Outcome
+With *clever covariate* and *fluctuation parameter* in hand, we can update the initial estimates of the expected outcome (step 5):
 
 ```{r}
 dat_tmle<- dat_tmle %>% 
@@ -546,15 +753,15 @@ dat_tmle<- dat_tmle %>%
   
 ```
 
--   Step 5: Compute the Statistical Estimand of Interest
+and finally, compute the target estimate (ATE):
 
 ```{r}
 (tmle_ate <- mean(dat_tmle$Q_1_update - dat_tmle$Q_0_update))  
 ```
 
-*Chef's Kiss*
+*Chef's Kiss!*
 
-Of course, there is a one-stop-shop package to calculate TMLE
+Now that you've seen how the machine works, we'll let you in on a secret: there is (of course) a one-stop-shop package to calculate `tmle`:
 
 ```{r}
 tmle_fit <- tmle(Y = Y, A = A, W = W,
@@ -568,26 +775,60 @@ tmle_fit
 tmle_fit$estimates$ATE$psi
 ```
 
-# Double machine learning
+Look how close that is to our *true* ATE! Now let's return to our estimation table and see how TMLE compares:
 
-Another promising technique for controlling for confounding variables using machine learning methods is Double Machine Learning (DML). 
 
-The core idea of DML is to leverage machine learning algorithms to flexibly model and control for confounders while isolating the effect of the treatment variable on the outcome. The core steps of the DML algorithm are: 
+| Method                                             |                            ATE (or ATT)                            |
+|---------------------------------------------------|:-------------------:|
+| *true* (baseline ref)                              |                      `r round(True_ATE, 4)`%                       |
+| crude (naive) estimate                             | `r round((naive$coefficients["statin"]-True_ATE)/True_ATE*100,2)`% |
+| propensity score matching                          |       `r round(adjusted.PSmatch$coefficients["statin"], 4)`%       |
+| propensity score weighting (stabilized weight)     |            `r round(ate_st$coefficients["statin"], 4)`             |
+| propensity score weighting (non-stabilized weight) |            `r round(ate_ns$coefficients["statin"], 4)`             |
+| g-computation                                      |  `r round(ate_gcomp <- mean(dat_g.comp$Q_1 - dat_g.comp$Q_0), 4)`  |
+| TMLE                                               |  `r round(tmle_fit$estimates$ATE$psi, 4)`.             |
 
-1) **Prediction:** Predict the outcome variable $Y$ and the treatment variable $D$ using covariates $Z$ by estimating $E[Y|Z]$ and $E[D|Z]$. This can be done using machine learning methods such as Random Forest or other high-performing ML tools (we use random forests in our worked example)
+You'll notice in this case, TMLE and g-computation returned very similar results. In part that is because we used `SuperLearner` for both estimates. It is also due to the complete nature of the synthetic data. If we were working with incomplete, real world data, however, TMLE would be invaluable because would be able to fill in gaps that halt traditional methods. <!-- Andy, confirm this is true & fill in benefits of TMLE that I'm missing --> 
 
-2) **Residualization (Orthogonalization):** Compute the residuals $W = Y - E[Y|Z]$ and $V = D - E[D|Z]$. This step is similar to the Frisch-Waugh-Lovell procedure briefly outlined below.
+## Double machine learning (a very brief intro) {.tabset .tabset-fade .tabset-pills}
 
-3) **Regression:** Regress $W$ on $V$ to estimate the target parameter $\psi$. 
+### Overview
 
-The Key Ingredients of DML are:
+[Double Machine Learning (DML)](https://academic.oup.com/ectj/article/21/1/C1/5056401 "While we provide a brief introduction in this section, see Chernozhukov, et al. (2018) for an excellent, but highly-technical paper on Double Machine Learning.") is another emerging (and promising) technique that combines traditional treatment effect estimators with machine learning to control for confounding. The core idea of DML is to leverage high-quality machine learning algorithms in order to more flexibly model and control for confounders while isolating the effect of the treatment variable on the outcome. This model is particularly good at inferring treatment effects in large data sets with high numbers of covariates. 
 
-* Neyman orthogonality
-* High-quality ML estimation
-* Sample splitting
+DML uses [orthogonalization](https://medium.com/@rajathbharadwaj/what-is-orthogonalization-in-machine-learning-49ea27b696f1 "Orthogonalization is a a method employed in machine learning to isolate individual parameters which are interwoven in the original data set. If you are unfamiliar with this idea, the linked Medium article offers a good sequence of metaphors, including one about dials on a old-time radio."), in particular Neyman orthogonality, to generate estimators which are insensitive to small errors in the nuisance parameters (auxiliary parameters needs to adjust the main parameter estimation process to reduce bias, for example outcome model and propensity score). It also makes use of *sample splitting* (or dividing the data into multiple parts that are used to estimate different parameters, in order to reduce the risk of overfitting) and *cross-fitting* (or doing multiple iterations of sample splitting and averaging the results). 
 
-See Chernozhukov, et. al., 2018 for the excellent, but highly-technical paper.
+The three primary steps of the DML algorithm are:
 
+1)  **Prediction:** Predict the outcome and treatment variable given a set of covariates, using high-performing machine learning tools (such as [random forest](https://www.ibm.com/topics/random-forest "Random forest is a machine learning algorithm that use multiple decision making trees to reach a single result. Read more about it on IBM's site, linked here."). 
+
+2)  **Residualization (orthogonalization):** Compute the residuals (difference between the predicted values and the actual values). See the *Bonus* tab in this section for an overview of a similar method, the *Frisch-Waugh-Lovell procedure*. 
+
+3)  **Regression:** Estimate the target parameter (e.g. ATE) by regressing the residual of the outcome variables onto the residuals of the treatment variables. Regress $W$ on $V$ to estimate the target parameter $\psi$.
+
+### Notation
+
+In DML, the outcome and treatment variables are estimated using machine learning methods. These estimations are represented by: 
+
+$$E[Y|Z] \space \text{ and } \space E[D|Z]$$
+
+where $Y$ is outcome, $A$ is treatment, and $X$ is the set of covariates.
+
+<!-- I changed the variables used to keep consistent with the rest of the article  -->
+
+Residuals are defined as:
+
+$$W = Y - E[Y|X] \space \text{ and } \space V = A - E[A|X]$$
+
+where $W$ is the residuals of the outcome variables and $V$ is the residuals of the treatment variable.
+
+The regression of $W$ onto $V$ can be represented as:
+
+$$W = \alpha + \psi + $V$ + \epsilon$$
+
+### Worked example
+
+Returning to our original data set, we will apply the `DoubleML` package:
 
 ```{r}
 obj_dml_data = DoubleMLData$new(Obs, y_col = "cholesterol", d_cols = "statin")
@@ -613,9 +854,62 @@ doubleml_plr$fit()
 doubleml_plr$summary()
 ```
 
+Again that's pretty close to the *true* ATE. Next, we'll look at how the three methods compare and consider how these results might vary more in across different data sets.
 
+## Bonus technique: Frisch-Waugh-Lovell
 
-# Everything together:
+Established in the early twentieth century, the Frisch-Waugh-Lovell (FWL) theorem is a result in regression analysis used to estimate coefficients in multiple linear regression models. It provides a method for obtaining the coefficient of a single regressor in the presence of other regressors, and is similar to the method used in DML to calculate residualization. Below we will walk through an example using FWL to calculate the residuals of a treatment and outcome.
+
+First, we will regress A(T) on W(X) <!-- can we make these variables match above? --> 
+
+```{r}
+a.hat <- glm(statin ~  age + gender + priorchol, data = ObsData)
+```
+
+Then, we will regress Y on W (X):
+
+```{r}
+y.hat <- glm(cholesterol ~  age + gender + priorchol, data = ObsData)
+```
+
+Now, let's compute residuals from the first two regressions:
+
+```{r}
+delta.a <- a.hat$residuals
+delta.y <- y.hat$residuals
+```
+
+Last, from these results, we can regress residuals delta.y on residuals delta.a:
+
+```{r}
+Delta <- glm(delta.y ~ delta.a)
+
+Delta$coefficients["delta.a"]
+```
+
+Voila!
+
+# In closing... {.tabset .tabset-fade .tabset-pills}
+
+## Benefits and shortcomings of each method
+
+<!-- Let's give a summary, What are the take aways conceptually? --> 
+
+## Worked example
+
+Let's take a look at all the ATE values we have thus far calculated:
+
+| Method                                             |                            ATE (or ATT)                            |
+|---------------------------------------------------|:-------------------:|
+| *true* (baseline ref)                              |                      `r round(True_ATE, 4)`%                       |
+| crude (naive) estimate                             | `r round((naive$coefficients["statin"]-True_ATE)/True_ATE*100,2)`% |
+| propensity score matching                          |       `r round(adjusted.PSmatch$coefficients["statin"], 4)`%       |
+| propensity score weighting (stabilized weight)     |            `r round(ate_st$coefficients["statin"], 4)`             |
+| propensity score weighting (non-stabilized weight) |            `r round(ate_ns$coefficients["statin"], 4)`             |
+| g-computation                                      |  `r round(ate_gcomp <- mean(dat_g.comp$Q_1 - dat_g.comp$Q_0), 4)`  |
+| TMLE                                               |  `r round(tmle_fit$estimates$ATE$psi, 4)`             |
+| DML                                               |  xxx             |
+<!-- and theoretically? --> 
 
 ```{r}
 plot(c(1,2,3,4,5,6), c(naive$coefficients["statin"], 
@@ -634,100 +928,20 @@ abline(h = True_ATE, lty = 2, lwd = 2, col = "grey")
 text(2, .26, "grey line = 'true value'")
 ```
 
-## Bonus: prettier DAGs and adjusting with `ggdag` package
-
-```{r}
-theme_set(theme_dag())
-
-D_AW_DAG <- dagify(Y ~  A + W1 + W2 + W3 ,
-                   A ~ W1 + W2 + W3,
-                   W3 ~ W1,
-                   labels = c("Y" = "Cholesterol", 
-                              "A" = "Statins",
-                              "W1" = "Age",
-                              "W2" = "Gender",
-                              "W3" = "Prior Cholesterol"),
-                   exposure = "A",
-                   outcome = "Y")
-ggdag(D_AW_DAG, text = TRUE, use_labels = "label")
-```
-
-Look at options here:
-
-<https://cran.r-project.org/web/packages/ggdag/ggdag.pdf>
-
-### Example: adjust for W1
-
-```{r}
-# control_for(D_AW_DAG, var = "W1")
-ggdag_adjust(D_AW_DAG, var = "W3")
-```
-
-
-# Bonus Frisch-Waugh-Lovell (FWL) 
-
-## 1. Regress A (T) on W (X)
-
-```{r}
-a.hat <- glm(statin ~  age + gender + priorchol, data = ObsData)
-```
 
 
 
 
-## 2. Regress Y on W (X)
-
-```{r}
-y.hat <- glm(cholesterol ~  age + gender + priorchol, data = ObsData)
-```
-
-
-## 3. Compute residuals from regressions 1 & 2. 
-
-```{r}
-delta.a <- a.hat$residuals
-delta.y <- y.hat$residuals
-```
-
-
-
-## 4. Regress residuals delta.y on residuals delta.a
-
-```{r}
-Delta <- glm(delta.y ~ delta.a)
-
-Delta$coefficients["delta.a"]
-```
-
-Voila
-
-
-
-
-
-
-
-
-
-
-***
+Same goal: 
+Same inputs:
+All of them could be made better by using machine learning for 
+Guido/Benz and Josh Angress *noble prize winners* One believed that's the future, and the other said he didn't want to go forward: fear - ML might be less tractable - but this misses that regression models were never tractable. // FDA cares about tractability: show your steps, keep your hands above the table, and we'll accept. 
 
 # References
 
-1.  Rosenbaum, P. R., & Rubin, D. B. (1983). ["The central role of the propensity score in observational studies for causal effects."][rosenbaumeta] *Biometrika*, 70(1), 41-55.
-2.  Austin, P. C. (2011). ["An introduction to propensity score methods for reducing the effects of confounding in observational studies."][austin] *Multivariate Behavioral Research*, 46(3), 399-424.
-3.  van der Laan, M. J., & Rose, S. (2011). ["Targeted Learning: Causal Inference for Observational and Experimental Data."][vanderlaan] Springer.
-4. Chernozhukov, V., Chetverikov, D., Demirer, M., Duflo, E., Hansen, C., Newey, W., & Robins, J. (2018). ["Double/debiased machine learning for treatment and structural parameters."][Chernozhukov] The Econometrics Journal, 21(1), C1-C68., https://doi.org/10.1111/ectj.12097
+<!-- fill out with all linked articles as well? --> 
 
-## Suggested Reading
-
-
-
-[kingetal]: <https://gking.harvard.edu/publications/why-propensity-scores-should-not-be-used-formatching> "King, G., & Nielsen, R. 2019. 'Why Propensity Scores Should Not Be Used for Matching,' Political Analysis, 27(4), 435-454: 'We show that propensity score matching (PSM), an enormously popular method of preprocessing data for causal inference, often accomplishes the opposite of its intended goal --- thus increasing imbalance, inefficiency, model dependence, and bias. The weakness of PSM comes from its attempts to approximate a completely randomized experiment, rather than, as with other matching methods, a more efficient fully blocked randomized experiment...'"
-[rosenbaumeta]: <https://academic.oup.com/biomet/article/70/1/41/240879> "Rosenbaum, P. R., & Rubin, D. B. (1983). 'The central role of the propensity score in observational studies for causal effects,' Biometrika, 70(1), 41-55: 'The propensity score is the conditional probability of assignment to a particular treatment given a vector of observed covariates. Both large and small sample theory show that adjustment for the scalar propensity score is sufficient to remove bias due to all observed covariates...'"
-[austin]: <https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3144483/> "Austin, P. C. (2011). 'An Introduction to Propensity Score Methods for Reducing the Effects of Confounding in Observational Studies,' 46(3), 399-424: 'The propensity score is the probability of treatment assignment conditional on observed baseline characteristics. The propensity score allows one to design and analyze an observational (nonrandomized) study so that it mimics some of the particular characteristics of a randomized controlled trial...'"
-[vanderlaan]: <https://ctml.berkeley.edu/publications/targeted-learning-causal-inference-observational-and-experimental-data-0> "van der Laan, M. J., & Rose, S. (2011). 'Targeted Learning: Causal Inference for Observational and Experimental Data.' Springer: 'The statistics profession is at a unique point in history. The need for valid statistical tools is greater than ever; data sets are massive, often measuring hundreds of thousands of measurements for a single subject. The field is ready to move towards clear objective benchmarks under which tools can be evaluated. Targeted learning allows (1) the full generalization and utilization of cross-validation as an estimator selection tool so that the subjective choices made by humans are now made by the machine, and (2) targeting the fitting of the probability distribution of the data toward the target parameter representing the scientific question of interest...'"
-[hoverbias]: ## "Bias is a systematic error in the design or execution of a study that can lead to incorrect estimates of the association between exposure and health outcomes."
-[effectshover]: <https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2652882/> "For an overview of effects measures in RWD studies, see: Hernán, M.A., & Robins, J.M. (2006). 'Estimating causal effects from epidemiological data.' J Epidemiol Community Health. 60(7), 578-86: In ideal randomised experiments, association is causation: association measures can be interpreted as effect measures because randomisation ensures that the exposed and the unexposed are exchangeable. On the other hand, in observational studies, association is not generally causation: association measures cannot be interpreted as effect measures because the exposed and the unexposed are not generally exchangeable. However, observational research is often the only alternative for causal inference. This article reviews a condition that permits the estimation of causal effects from observational data, and two methods—standardisation and inverse probability weighting—to estimate population causal effects under that condition. For simplicity, the main description is restricted to dichotomous variables and assumes that no random error attributable to sampling variability exists. The appendix provides a generalisation of inverse probability weighting."
-[Chernozhukov]: <https://academic.oup.com/ectj/article/21/1/C1/5056401> "Double Machine Learning (DML) is a statistical technique designed to estimate causal effects while controlling for confounding variables using machine learning methods. It addresses the challenges posed by high-dimensional data, where traditional methods may fail to accurately estimate causal parameters due to overfitting and model complexity.
-The core idea of DML is to leverage machine learning algorithms to flexibly model and control for confounders while isolating the effect of the treatment variable on the outcome."
+1.  Rosenbaum, P. R., & Rubin, D. B. (1983). ["The central role of the propensity score in observational studies for causal effects."](https://academic.oup.com/biomet/article/70/1/41/240879 "Rosenbaum, P. R., & Rubin, D. B. (1983). 'The central role of the propensity score in observational studies for causal effects,' Biometrika, 70(1), 41-55: 'The propensity score is the conditional probability of assignment to a particular treatment given a vector of observed covariates. Both large and small sample theory show that adjustment for the scalar propensity score is sufficient to remove bias due to all observed covariates...'") *Biometrika*, 70(1), 41-55.
+2.  Austin, P. C. (2011). ["An introduction to propensity score methods for reducing the effects of confounding in observational studies."](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3144483/ "Austin, P. C. (2011). 'An Introduction to Propensity Score Methods for Reducing the Effects of Confounding in Observational Studies,' 46(3), 399-424: 'The propensity score is the probability of treatment assignment conditional on observed baseline characteristics. The propensity score allows one to design and analyze an observational (nonrandomized) study so that it mimics some of the particular characteristics of a randomized controlled trial...'") *Multivariate Behavioral Research*, 46(3), 399-424.
+3.  van der Laan, M. J., & Rose, S. (2011). ["Targeted Learning: Causal Inference for Observational and Experimental Data."](https://ctml.berkeley.edu/publications/targeted-learning-causal-inference-observational-and-experimental-data-0 "van der Laan, M. J., & Rose, S. (2011). 'Targeted Learning: Causal Inference for Observational and Experimental Data.' Springer: 'The statistics profession is at a unique point in history. The need for valid statistical tools is greater than ever; data sets are massive, often measuring hundreds of thousands of measurements for a single subject. The field is ready to move towards clear objective benchmarks under which tools can be evaluated. Targeted learning allows (1) the full generalization and utilization of cross-validation as an estimator selection tool so that the subjective choices made by humans are now made by the machine, and (2) targeting the fitting of the probability distribution of the data toward the target parameter representing the scientific question of interest...'") Springer.
+4.  Chernozhukov, V., Chetverikov, D., Demirer, M., Duflo, E., Hansen, C., Newey, W., & Robins, J. (2018). ["Double/debiased machine learning for treatment and structural parameters."](https://academic.oup.com/ectj/article/21/1/C1/5056401 "Double Machine Learning (DML) is a statistical technique designed to estimate causal effects while controlling for confounding variables using machine learning methods. It addresses the challenges posed by high-dimensional data, where traditional methods may fail to accurately estimate causal parameters due to overfitting and model complexity. The core idea of DML is to leverage machine learning algorithms to flexibly model and control for confounders while isolating the effect of the treatment variable on the outcome.") The Econometrics Journal, 21(1), C1-C68., <https://doi.org/10.1111/ectj.12097>
