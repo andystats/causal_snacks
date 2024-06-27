@@ -1,7 +1,7 @@
 ---
 title: "Crash course on confounding, bias, and deconfounding remedies using R"
 author: "Andy Wilson and Aimee Harrison"
-date: "Jun 25$^{th}$, 2024"
+date: "Jun 27$^{th}$, 2024"
 output:
   html_document:
     toc: true
@@ -562,7 +562,7 @@ ate_st <- svyglm(cholesterol ~ statin, design = design_st)
 summary(ate_st)
 ```
 
-Remember that the *true* treatment effect we calculated using $Y(0)$ and $Y(1)$ was `r round(True_ATE, 4)`%. Both stabilized and non-stabilized weights get us very close to this ATE (`r round(ate_st$coefficients["statin"], 4)`% and `r round(ate_ns$coefficients["statin"], 4)`% respectively) -- even closer than propensity score matching got us.
+Remember that the *true* treatment effect we calculated using $Y(0)$ and $Y(1)$ was `r round(True_ATE, 4)`. Both stabilized and non-stabilized weights get us very close to this ATE (`r round(ate_st$coefficients["statin"], 4)` and `r round(ate_ns$coefficients["statin"], 4)` respectively) -- even closer than propensity score matching got us.
 
 ------------------------------------------------------------------------
 
