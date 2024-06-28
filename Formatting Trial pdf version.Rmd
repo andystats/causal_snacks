@@ -1028,8 +1028,9 @@ plot(c(1,2,3,4,5,6), c(naive$coefficients["statin"],
      xlab = "method",
      axes = F, lwd = 2)
 axis(1, at = c(1,2,3,4, 5,6), 
-     labels = c("crude", "PS-match.", "PS-weight."," 
-                G-comp", "TMLE", "DML"))
+     labels = c("crude", "PS-m", "PS-w",
+                "G-comp", "TMLE", "DML"),
+     cex.axis = 0.8)
 axis(2)
 abline(h = True_ATE, lty = 2, lwd = 2, col = "grey")
 text(2, .26, "grey line = 'true value'")
