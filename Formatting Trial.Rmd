@@ -33,38 +33,37 @@ set.seed(12345)
 # Introduction {.tabset .tabset-fade .tabset-pills}
 
 > In theory there is no difference between theory and practice. In practice there is.  
-> <br>
-> <strong>Yogi Berra</strong>
+> **Yogi Berra**
 
-Confounding bias is one of the most ubiquitous challenges in estimating effects from observational (real-world data) studies. Confounding happens when the relationship between a treatment (or other exposure) and an outcome is distorted by the presence of other variables. These confounding variables can create misleading associations, or biases, making it difficult to infer causal relationships accurately. Fortunately, study design and statistical methods have been evolving to help us mitigate biases and recover the true effect estimate.
+Confounding bias is one of the most ubiquitous challenges in estimating effects from observational (real-world data) studies. Confounding occurs when the relationship between a treatment (or other exposure) and an outcome is distorted by the presence of other variables. These confounding variables can create misleading associations, or biases, making it difficult to infer causal relationships accurately. Fortunately, study design and statistical methods have been evolving to help us mitigate biases and recover the true [treatment effect estimate](https://github.com/imirzadeh/awesome-causal-inference "A treatment effect estimate quantifies the impact of treatment on a particular outcome. While this article is intended to give an overview of practical causal methods to readers from diverse backgrounds, if you are new to causal inference, we receommend referencing one of the excellent resources @imirzadeh has pulled together in the list linked here for an overview of foundational concepts.").
 
-In this article, we will explore the concepts of confounding, bias, causal identifiability, and target trial emulation and also provide an overview of causal graphs. We will then introduce traditional and modern (or emerging) applied methods for estimating effects from data -  including targeted learning and targeted maximum likelihood estimation (TMLE) and double machine learning (DML). At the end, you should have a general understanding of the benefits and shortcomings of traditional and emerging methods for estimating treatment effect as well as how we (can) draw causal conclusions from data.
+In this article, we will explore the concepts of confounding, bias, causal identifiability, and target trial emulation. We will then provide an overview of causal graphs before introducing traditional and modern (or emerging) applied methods for estimating effects from data, including targeted learning, using targeted maximum likelihood estimation (TMLE), and double machine learning (DML). By the end, you should have a general understanding of the benefits and shortcomings of traditional and emerging methods for estimating treatment effects, as well as how we (can) draw causal conclusions from data.
 
 ## How to read this article
 
 In order to offer a meaningful experience for readers across multiple fields, we have made use of tabs to separate conceptual overviews, notation, and a worked example in R. If you would like to learn the concepts but do not have a need to apply these methods, proceed by reading linearly. If you would like to see how these methods work in practice, use the "Notation" and "Worked Example" tabs.
 
-We have also provided additional resources for key terms from the field that not all readers will be familiar with. Hover over a hyperlink to see a definition, and use the hyperlinks to navigate to more in-depth background materials.[^1]
+We have also provided additional resources for key terms from the field that may not be familiar to all readers. Hover over a hyperlink to see a definition, and use the hyperlinks to navigate to more in-depth background materials.[^1]
 
 [^1]: Note on accessibility: This is the authors' first time using these formatting conventions in RMarkdown. If you are experiencing difficulty reading the article due to compatibility with assistive technologies, or for any other reasons, please reach out to the authors. We would be happy to provide you with an alternate format, and will incorporate feedback into future iterations of the work.
 
 ------------------------------------------------------------------------
 
-## Introduction to the worked example
+## Worked example
 
 In this demonstration, we'll:
 
-1)  create (plausible) synthetic data so that we can know the ground truth effect we're trying to estimate;
-2)  estimate the effect without any attempt to remedy confounding (to start with our baseline **biased** estimate); and
+1)  create (plausible) synthetic data so that we can know the ground truth treatment effect we're trying to estimate;
+2)  estimate the treatment effect without any attempt to remedy confounding (which will allow us to establish our baseline *biased* estimate); and
 3)  apply and compare traditional (propensity scores, g-computation) and emerging (TMLE, DML) statistical methods to recover the unbiased effect.
 
-We will be using an example scenario where the protective effect of statins (treatment) against high cholestoral (outcome) is obscured by confounding. Though we will be working with synthetic data in our example, this is a common and reproducible type of problem in public health.
+We will be using an example scenario where the protective effect of statins (treatment) against high cholesterol (outcome) is obscured by confounding. Though we will be working with synthetic data in our example, this is a common and reproducible type of problem in public health.
 
 ------------------------------------------------------------------------
 
 ## Libraries for today's R session
 
-All the following libraries are available via CRAN and can be installed either through the `tools` menu or using `install.packages(" ")` command for each.
+All the following libraries are available via [CRAN](https://cran.r-project.org/ "The Comprehensive R Archive Network (CRAN)") and can be installed either through the `tools` menu or using `install.packages(" ")` command for each.
 
 ```{r}
 library(simcausal)
@@ -87,58 +86,44 @@ nn = 5000 #Simulation(s) sample size
 
 ------------------------------------------------------------------------
 
-## About the authors
-
-Andy Wilson received his PhD in Public Health and MStat in biostatistics from the University of Utah School of Medicine. He is currently adjunct faculty in the Department of Family and Preventive Medicine at the University of Utah and Head of Innovative RWD Analytics at Parexel, a large CRO. He is interested in emerging causal methods and how they help advance real-world data analytics. 
-
-Aimee Harrison
-
-------------------------------------------------------------------------
-
 # The target trial and causal interpretations {.tabset .tabset-fade .tabset-pills}
 
 ## Overview
 
-<!-- Andy to adjust this section / split it out into overview + identifiability assumptions -->
+In an ideal research setting, we would be able to observe the outcome for a group of individuals with perfectly identical covariates under treated and untreated conditions. Because this is never possible in the real world, we rely on methods to ensure treated and untreated groups are as similar to one another as we can make them. To establish the *legitimacy* of causal claims, we must satisfy [causal idenifiability assumptions](https://www.hsph.harvard.edu/miguel-hernan/wp-content/uploads/sites/1268/2024/01/hernanrobins_WhatIf_2jan24.pdf "Causal identifiability assumptions provide the set of conditions that allow us to estimate effects measures. For a more in-depth exploration of causal identifiability assumptions, see chapter three in Hernán and Robins (2010), Causal Inference: What If"). These are, briefly:
 
-<!-- What do you think of this going first? It provides a theoretical framework for how you are setting up - gives a space to offer key definitions - and then it won't interrupt the flow of the worked example to not have a worked example in this? -->
+1)  *Exchangeability:* treated and untreated groups are comparable (in terms of both observed and unobserved confounders).
+2)  *Positivity:* each subject has a positive probability of receiving each treatment given their covariates.
+3)  *Consistency:* potential outcomes are consistent with observed treatment. (In other words, potential outcomes under the treatment observed are the same as the outcomes that would be observed if the treatment were assigned.)
+4)  *No interference (aka, single unit treatment):* the treatment of one subject does not affect the outcome of another subject.
 
-Methods to estimate treatment effects in a population depend on exchangability, or approximating equivalent conditions and baseline characteristics between the treated and untreated groups. Because we can never actually know what the outcomes for a treated group would have been had all the individuals in the group remained untreated (the counterfactual), we depend on our untreated and treated groups being sufficiently similar, so that we can more more confidently assess causal effects of a treatment.
+By satisfying these identifiability assumptions, we strengthen the validity of our causal claims, whether derived from randomized controlled trials or observational studies.
 
-Unlike in randomized controlled trials (RCTs), where random assignment of treatment ensures that treatment groups are comparable, observational studies rely on study design and statistical techniques to account for differences between treated and untreated groups. One approach to estimating causal effects in observational studies is to emulate the conditions of a target randomized trial as closely as possible. This process, often referred to as “target trial emulation,” involves designing the observational study to mimic the hypothetical RCT that would answer the causal question of interest.
+Unlike in randomized controlled trials (RCTs), where random assignment of treatment ensures that treatment groups are comparable (thus identifiability conditions are met), observational studies rely on study design and statistical techniques to account for differences between treated and untreated groups. One approach to estimating causal effects in observational studies is to emulate the conditions of a target randomized trial as closely as possible. This process, often referred to as “[target trial emulation](https://journals.lww.com/jasn/fulltext/2023/08000/target_trial_emulation_to_improve_causal_inference.5.aspx "For a deeper dive into target trial emulation, see Fu (2023) 'Target Trial Emulation to Improve Causal Inference from Observational Data: What, Why, and How?'."),” involves designing the observational study to mimic the hypothetical RCT that would answer the causal question of interest.
 
-But whether causal effects are estimated from randomized data or observational data, the **legitimacy** of the causal claims comes from satisfying what we refer to as the `Causal Idenifiability assumptions.` (Hernan and Robins, *What IF*) These are, briefly: 
+## Notation
 
-1) *Exchangeability:* The treated and untreated groups are comparable.
-2) *Positivity:* Each subject has a positive probability of receiving each treatment.
-3) *Consistency:* The potential outcomes are consistent with the observed treatment.
-4) No Interference: The treatment of one subject does not affect the outcome of another. {Also referred to as the single unit treatment }
+#### **Identifiability Assumptions**
 
-## Identifiability assumptions
+**Exchangeability** (*treated and untreated groups are comparable*) is represented as:
 
-<!-- Andy to fill out -->
+$$Y_t \perp\!\!\!\perp T \mid W$$ where the potential outcome $Y_t$ is independent of the treatment $T$ given the covariates $W$.
 
-1. **Exchangeability**: 
-   - *Description*: The treated and untreated groups are comparable in terms of both observed and unobserved confounders.
-   - *Mathematical Notation*: \( Y_t \perp\!\!\!\perp T \mid W \)
-   - *Explanation*: The potential outcome \( Y_t \) is independent of the treatment \( T \) given the covariates \( W \).
+**Positivity** (*each subject has a positive probability of receiving each treatment*) is defined as:
 
-2. **Positivity**: 
-   - *Description*: Each subject has a positive probability of receiving each treatment level given their covariates.
-   - *Mathematical Notation*: \( P(T = t \mid W = w) > 0 \) for all treatment levels \( t \) and covariates \( w \).
-   - *Explanation*: There should be no combination of covariates for which a treatment probability is zero.
+$$P(T = t \mid W = w) > 0$$ for all treatment levels $t$ and covariates $w$. (In other words, there should be no combination of covariates for which a treatment probability is zero.)
 
-3. **Consistency**: 
-   - *Description*: The potential outcomes under the treatment observed are the same as the outcomes that would be observed if the treatment were assigned.
-   - *Mathematical Notation*: \( Y = Y_t \) if \( T = t \)
-   - *Explanation*: If a subject received treatment \( t \), their observed outcome is \( Y_t \).
+**Consistency** (*potential outcomes are consistent with observed treatment*) is represented as:
 
-4. **No Interference**: 
-   - *Description*: The treatment of one subject does not affect the outcome of another subject.
-   - *Mathematical Notation*: \( Y_{i,t} \) is not affected by \( T_j \) for \( i \neq j \).
-   - *Explanation*: The potential outcome \( Y_{i,t} \) of subject \( i \) is only affected by their own treatment \( T_i \), not by the treatment of any other subject \( T_j \).
+$$Y = Y_t$ if $T = t$$
 
-By satisfying these assumptions, we strengthen the validity of our causal claims, whether derived from randomized controlled trials or observational studies.
+where a subject who received treatment $t$ has an observed outcome is $Y_t$.
+
+**No Interference** (*the treatment of one subject does not affect the outcome of another subject*) is represented as:
+
+$$Y_{i,t} \text{ not affected by } T_j \text{ for } i \neq j$$.
+
+or, in other words: the potential outcome $Y_{i,t}$ of subject $i$ is only affected by their own treatment $T_i$, not by the treatment of any other subject $T_j$.
 
 ------------------------------------------------------------------------
 
