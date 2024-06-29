@@ -2,12 +2,11 @@
 title: "Crash course on confounding, bias, and deconfounding remedies using R"
 author: "Andy Wilson and Aimee Harrison"
 date: "Jun 28$^{th}$, 2024"
-output:
-  html_document:
+output: 
+  pdf_document:
     toc: true
-    toc_float: true
-    collapsed: false
     toc_depth: 2
+    latex_engine: xelatex
 ---
 
 ```{r setup, include=FALSE}
@@ -30,7 +29,7 @@ library(mlr3learners)
 set.seed(12345)
 ```
 
-# Introduction {.tabset .tabset-fade .tabset-pills}
+# Introduction 
 
 > In theory there is no difference between theory and practice. In practice there is.  
 > <br>
@@ -95,7 +94,7 @@ Aimee Harrison
 
 ------------------------------------------------------------------------
 
-# The target trial and causal interpretations {.tabset .tabset-fade .tabset-pills}
+# The target trial and causal interpretations 
 
 ## Overview
 
@@ -142,7 +141,7 @@ By satisfying these assumptions, we strengthen the validity of our causal claims
 
 ------------------------------------------------------------------------
 
-# Directed acyclic graphs {.tabset .tabset-fade .tabset-pills}
+# Directed acyclic graphs 
 
 ## Overview
 
@@ -188,9 +187,14 @@ We're going to use a package called `simcausal` to create a hypothetical DAG and
 D_AW <- DAG.empty() + 
   node("age", distr = "rnorm", mean = 50, sd = 10) +
         node("gender", distr = "rbern", prob = 0.5) +
-       node("priorchol", distr = "rnorm", mean = 200 + 0.5 * age, sd = 30) +
-        node("statin", distr = "rbern", prob = plogis(-2 + 0.02 * priorchol + 0.01 * age - 0.5 * gender)) +
-        node("cholesterol", distr = "rnorm", mean = 180 - 20 * statin + 0.8 * priorchol + 0.5 * age + 5 * gender, sd = 15)
+       node("priorchol", distr = "rnorm", mean = 200 + 
+              0.5 * age, sd = 30) +
+        node("statin", distr = "rbern", 
+             prob = plogis(-2 + 0.02 * priorchol + 
+                             0.01 * age - 0.5 * gender)) +
+        node("cholesterol", distr = "rnorm", 
+             mean = 180 - 20 * statin + 0.8 * priorchol + 0.5 * 
+               age + 5 * gender, sd = 15)
 
 D_AW_set <- set.DAG(D_AW)
 ```
@@ -266,7 +270,7 @@ ggdag_adjust(D_AW_DAG, var = "W3")
 
 ------------------------------------------------------------------------
 
-# Bias and average treatment effect {.tabset .tabset-fade .tabset-pills}
+# Bias and average treatment effect 
 
 ## Overview
 
@@ -333,7 +337,7 @@ So our bias in the above example is `r round((naive_est-True_ATE)/True_ATE*100,4
 
 # Traditional methods for effects estimates
 
-## Crude (naive) estimates {.tabset .tabset-fade .tabset-pills}
+## Crude (naive) estimates 
 
 ### Overview
 
@@ -384,7 +388,7 @@ As we can see, by regression, we get get the same biased estimate (statin coeffi
 
 ## Propensity Scores
 
-###  {.tabset .tabset-fade .tabset-pills}
+###  
 
 #### Overview
 
@@ -404,7 +408,7 @@ where $T$ represents the treatment indicator (1 for treated, 0 for untreated), a
 
 ------------------------------------------------------------------------
 
-### Propensity Scores for Matching {.tabset .tabset-fade .tabset-pills}
+### Propensity Scores for Matching 
 
 #### Overview
 
@@ -486,7 +490,7 @@ You'll notice that the effects estimate we calculated here is much to the *true*
 
 ------------------------------------------------------------------------
 
-### Propensity Scores for Weighting {.tabset .tabset-fade .tabset-pills}
+### Propensity Scores for Weighting 
 
 #### Overview
 
@@ -518,7 +522,8 @@ Returning to our original data set, let's use the `WeightIt` package to recalcul
 
 ```{r}
 # Calculating non-stabilized weights
-w.out.ns <- weightit(cholesterol ~ age + gender + priorchol, data = ObsData, method = "ps", estimand = "ATE", stabilize = FALSE)
+w.out.ns <- weightit(cholesterol ~ age + gender + priorchol, data = ObsData, 
+                     method = "ps", estimand = "ATE", stabilize = FALSE)
 summary(w.out.ns)
 
 # Adding weights to data
@@ -529,7 +534,8 @@ And then again for stabilized weights:
 
 ```{r}
 # Calculating stabilized weights
-w.out.st <- weightit(cholesterol ~ age + gender + priorchol, data = ObsData, method = "ps", estimand = "ATE", stabilize = TRUE)
+w.out.st <- weightit(cholesterol ~ age + gender + priorchol, data = ObsData, 
+                     method = "ps", estimand = "ATE", stabilize = TRUE)
 summary(w.out.st)
 
 # Adding weights to data
@@ -566,7 +572,7 @@ Remember that the *true* treatment effect we calculated using $Y(0)$ and $Y(1)$ 
 
 ------------------------------------------------------------------------
 
-## G-computation {.tabset .tabset-fade .tabset-pills}
+## G-computation 
 
 ### Overview
 
@@ -696,7 +702,7 @@ To date, (in our opinion) targeted learning and TMLE offers the most promising m
 
 See [van der Laan and Rose (2011)](https://ctml.berkeley.edu/publications/targeted-learning-causal-inference-observational-and-experimental-data-0 "van der Laan, M. J., & Rose, S. (2011). 'Targeted Learning: Causal Inference for Observational and Experimental Data.' Springer: 'The statistics profession is at a unique point in history. The need for valid statistical tools is greater than ever; data sets are massive, often measuring hundreds of thousands of measurements for a single subject. The field is ready to move towards clear objective benchmarks under which tools can be evaluated. Targeted learning allows (1) the full generalization and utilization of cross-validation as an estimator selection tool so that the subjective choices made by humans are now made by the machine, and (2) targeting the fitting of the probability distribution of the data toward the target parameter representing the scientific question of interest...'") for an excellent full course on Targeted Learning.
 
-## Targeted maximum likelihood estimation {.tabset .tabset-fade .tabset-pills}
+## Targeted maximum likelihood estimation 
 
 ### Overview
 
@@ -851,7 +857,7 @@ Look how close that is to our *true* ATE! Now let's return to our estimation tab
 
 One thing to note is how tmle and g-comp estimates are nearly identical. This is a good chance to review that what tmle does is updates the g-comp estimates of $Q(1)$ and $Q(0)$ with this small amount $\epsilon$ - and you'll note in the above example $\epsilon \approx 0$. Again, this may be an artifact of how we generated the synthetic data and we invite readers to innovative data creation methods that tackle this limitation such as the CREDENCE framework of Eric Tchetgen Thetgen, et. al. 
 
-## Double machine learning (a method on the horizon) {.tabset .tabset-fade .tabset-pills}
+## Double machine learning (a method on the horizon) 
 
 And on our radar as an exciting and recent addition to the causal machine learning toolkit that debiases estimates and provides valid (causal)
 statistical inference.
@@ -953,7 +959,7 @@ Delta$coefficients["delta.a"]
 
 Voila!
 
-# In closing... {.tabset .tabset-fade .tabset-pills}
+# In closing... 
 
 We've been through a lot today. We introduced several concepts and methods and worked though the estimation of a (fixed) causal parameter from a synthetic dataset. We seeded in the effect **-20** and saw how all methods (aside from the crude estimate) do a good job of recovering the effect by accounting for confounding variables. Each method has unique strengths and weaknesses, but they all share the same goal of providing an unbiased estimate of the causal effect and take the same inputs for this example. 
 
@@ -1021,7 +1027,10 @@ plot(c(1,2,3,4,5,6), c(naive$coefficients["statin"],
      ylab = "parameter estimate", 
      xlab = "method",
      axes = F, lwd = 2)
-axis(1, at = c(1,2,3,4, 5,6), labels = c("crude", "PS-match.", "PS-weight."," G-comp", "TMLE", "DML"))
+axis(1, at = c(1,2,3,4, 5,6), 
+     labels = c("crude", "PS-m", "PS-w",
+                "G-comp", "TMLE", "DML"),
+     cex.axis = 0.8)
 axis(2)
 abline(h = True_ATE, lty = 2, lwd = 2, col = "grey")
 text(2, .26, "grey line = 'true value'")
