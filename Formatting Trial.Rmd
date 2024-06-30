@@ -1082,6 +1082,14 @@ The differences we observe today are relatively small but remember that we made 
 
 ------------------------------------------------------------------------
 
+# About the authors
+
+**Andy Wilson** received his PhD in Public Health and MStat in Biostatistics from the University of Utah School of Medicine. He is currently adjunct faculty in the Department of Family and Preventive Medicine at the University of Utah and Head of Innovative RWD Analytics at Parexel, a large CRO. He is interested in emerging causal methods and how they help advance real-world data analytics. 
+
+**Aimee Harrison** holds a BS in Writing and Humanistic Studies from MIT and an MFA in Writing and Poetics from the University of Washington. Her early career was spent in academic publishing, and she is currently a project manager at Navidence and head of product at Asclepia, both real-world data technology companies. She is interested in how we drive innovation and accessibility to real-world data tools through education.
+
+------------------------------------------------------------------------
+
 # References
 
 <!-- AH: still to fill out with all linked articles as well once we have a final set of links. -->
