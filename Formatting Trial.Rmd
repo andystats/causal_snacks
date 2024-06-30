@@ -39,6 +39,8 @@ Confounding bias is one of the most ubiquitous challenges in estimating effects 
 
 In this article, we will explore the concepts of confounding, bias, causal identifiability, and target trial emulation. We will then provide an overview of causal graphs before introducing traditional and modern (or emerging) applied methods for estimating effects from data, including targeted learning, targeted maximum likelihood estimation (TMLE), and double machine learning (DML). By the end, you should have a general understanding of the benefits and shortcomings of traditional and emerging methods for estimating treatment effects, as well as how we (can) draw causal conclusions from data.
 
+------------------------------------------------------------------------
+
 ## How to read this article
 
 In order to offer a meaningful experience for readers across multiple fields, we have made use of tabs to separate conceptual overviews, notation, and a worked example in R. If you would like to learn the concepts but do not have a need to apply these methods, proceed by reading linearly. If you would like to see how these methods work in practice, use the *Notation* and *Worked Example* tabs.
@@ -86,7 +88,9 @@ nn = 5000 #Simulation(s) sample size
 
 ------------------------------------------------------------------------
 
-# Potential outcome framework
+# Potential outcome framework {.tabset .tabset-fade .tabset-pills}
+
+## Overview
 
 The potential outcome framework, also known as the Neyman-Rubin causal model, is a formal approach to causal inference. It defines the causal effect of a treatment by comparing *potential outcomes* under different treatment conditions. Imagine each individual (or unit) as having two potential outcomes: one if they receive the treatment and another if they don't. In reality, we can only observe one of these outcomes (*the observed outcome*) – the other one remains unpicked, floating up in heaven.
 
@@ -98,7 +102,9 @@ The key concepts of the potential outcome framework are:
 
 Since we cannot observe both potential outcomes for the same individual simultaneously, estimating causal effects involves dealing with the *missing* potential outcomes. We often refer to this inability to observe both outcomes as the **fundamental problem of causal inference**.
 
-#### Estimating missing potential outcomes
+------------------------------------------------------------------------
+
+### Estimating missing potential outcomes
 
 Various methods are used to estimate missing potential outcomes (and thus causal effects). Increasingly, researchers leverage machine learning methods to calculate potential outcomes. One example of this entails using ensemble *super learners*. Two examples of methods that use super learners to estimate potential outcomes are [synthetic controls](%5Bhttps://medium.com/@nasdag/using-synthetic-control-methods-for-causal-inference-a-step-by-step-guide-7bbcb4f49e2f "Synthetic controls are a family of techniques that approximate potential outcomes to estimate causal effect. As we will not discuss these methods in depth in this article, see Dagher (2023) 'Using Synthetic Control Methods for Causal Inference: A Step-by-Step Guide' for an overview of synthetic controls.'") and *G-computation* (discussed in depth later in this article).
 
@@ -112,6 +118,8 @@ In **G-computation**, super learners work by:
 -   Using a statistical model to predict potential outcomes based on treatment and covariates.
 -   Simulating potential outcomes for each individual by modeling the expected outcome given covariates and treatment.
 -   Averaging these predictions to estimate causal effects.
+
+------------------------------------------------------------------------
 
 ## Notation
 
@@ -135,6 +143,8 @@ $$
 \Delta_i = Y_i(1) - Y_i(0)
 $$
 
+------------------------------------------------------------------------
+
 # The target trial and causal interpretations {.tabset .tabset-fade .tabset-pills}
 
 ## Overview
@@ -143,12 +153,14 @@ Unlike in randomized controlled trials (RCTs), where random assignment of treatm
 
 Regardless of whether the data set is derived from RCTs or observational studies, we establish the *legitimacy* of our causal claims by satisfying [causal identifiability assumptions](https://www.hsph.harvard.edu/miguel-hernan/wp-content/uploads/sites/1268/2024/01/hernanrobins_WhatIf_2jan24.pdf "Causal identifiability assumptions provide the set of conditions that allow us to estimate effects measures. For a more in-depth exploration of causal identifiability assumptions, see chapter three in Hernán and Robins (2010), Causal Inference: What If"). These are, briefly:
 
-1)  *Exchangeability:* Treated and untreated groups are comparable (in terms of both observed and unobserved confounders).
-2)  *Positivity:* Each subject has a positive probability of receiving each treatment (given their covariates).
-3)  *Consistency:* Potential outcomes are consistent with observed treatment. (In other words, the potential outcomes of a possible treatment are the same as the actual outcomes that would be observed if the treatment were assigned.)
-4)  *No interference (aka, single unit treatment):* The treatment of one subject does not affect the outcome of another subject.
+-   **Exchangeability:** Treated and untreated groups are comparable (in terms of both observed and unobserved confounders).
+-   **Positivity:** Each subject has a positive probability of receiving each treatment (given their covariates).
+-   **Consistency:** Potential outcomes are consistent with observed treatment. (In other words, the potential outcomes of a possible treatment are the same as the actual outcomes that would be observed if the treatment were assigned.)
+-   **No interference (aka, single unit treatment):** The treatment of one subject does not affect the outcome of another subject.
 
-The nature of RCTs, when designed properly, inherently ensures that identifiability conditions are met. In observational studies, the task of meeting these conditions is not always so obvious. Target trial emulation provides an entry into thinking about through this problem: If you could design a randomized-control trial to emulate your observational data, what would that study look like?  
+The nature of RCTs, when designed properly, inherently ensures that identifiability conditions are met. In observational studies, the task of meeting these conditions is not always so obvious. Target trial emulation provides an entry into thinking about through this problem: If you could design a randomized-control trial to emulate your observational data, what would that study look like?  
+
+------------------------------------------------------------------------
 
 ## Notation
 
@@ -541,9 +553,7 @@ summary(w.out.ns)
 ObsData$weights_ns <- w.out.ns$weights
 ```
 
-And then again for stabilized weights[^2]:
-
-[^2]: Notice that at a glance these results appear the same. This is because for simplicity, we did not introduce pathological weighting to our synthetic data. Had we introduced extreme propensity scores (e.g., near 0), the non-stabilized and stabilized weights could have produced different. It's useful to note that extreme weights are also a consideration when addressing the positivity identifiability assumption.
+And then again for stabilized weights:
 
 ```{r}
 # Calculating stabilized weights
@@ -553,6 +563,8 @@ summary(w.out.st)
 # Adding weights to data
 ObsData$weights_st <- w.out.st$weights
 ```
+
+Notice that at a glance these results appear the same. This is because for simplicity, we did not introduce pathological weighting to our synthetic data. Had we introduced extreme propensity scores (e.g., near 0), the non-stabilized and stabilized weights could have produced different. It's useful to note that extreme weights are also a consideration when addressing the positivity identifiability assumption.
 
 Now we will use `svydesign` to generate data for treated and control groups based on our weighted data, and from those groups, we will calculate ATE. First for non-stabilized weights:
 
@@ -685,7 +697,11 @@ Nice! This is *very* close to the *true* ATE. let's pause and take a look at how
 | propensity score weighting (non-stabilized weight) |           `r round(ate_ns$coefficients["statin"], 4)`            |
 | g-computation                                      | `r round(ate_gcomp <- mean(dat_g.comp$Q_1 - dat_g.comp$Q_0), 4)` |
 
+------------------------------------------------------------------------
+
 # Emerging methods for effects estimates
+
+## Targeted Learning
 
 Targeted Learning emerged as a framework in the early-mid 2000s, led by the work of Mark van der Laan and Jamie Robins. The crux of Targeted Learning is to start with a target parameter of interest and set up the problem such that we can use data-adaptive substitution estimators to produce the most unbiased estimate of the parameter possible for a given study design. It does this by leveraging the flexibility of machine learning algorithms to model complex relationships within the data, while simultaneously incorporating robust statistical principles to ensure valid inference. Specifically, Targeted Learning:
 
@@ -700,6 +716,8 @@ Targeted Learning aims to achieve a balance between flexibility and statistical 
 In our opinion, targeted learning, and TMLE, offer the most promising method to debias target estimates and accurately estimate the true (treatment) effect from a given study design.
 
 See [van der Laan and Rose (2011)](https://ctml.berkeley.edu/publications/targeted-learning-causal-inference-observational-and-experimental-data-0 "van der Laan, M. J., & Rose, S. (2011). 'Targeted Learning: Causal Inference for Observational and Experimental Data.' Springer: 'The statistics profession is at a unique point in history. The need for valid statistical tools is greater than ever; data sets are massive, often measuring hundreds of thousands of measurements for a single subject. The field is ready to move towards clear objective benchmarks under which tools can be evaluated. Targeted learning allows (1) the full generalization and utilization of cross-validation as an estimator selection tool so that the subjective choices made by humans are now made by the machine, and (2) targeting the fitting of the probability distribution of the data toward the target parameter representing the scientific question of interest...'") for an excellent full course on Targeted Learning.
+
+------------------------------------------------------------------------
 
 ## Targeted maximum likelihood estimation {.tabset .tabset-fade .tabset-pills}
 
@@ -731,6 +749,8 @@ Though the resulting ATE may appear similar to our traditional methods, there ar
 
 -   **Robustness to model misspecification:** TMLE's targeted update step helps mitigate bias due to model misspecification, leading to more reliable causal inference.
 
+------------------------------------------------------------------------
+
 ### Notation
 
 The **estimated outcome regression** is represented as:\
@@ -757,6 +777,8 @@ where $\Psi$ is ATE, $w_i$ is the covariates of interest, and $1$ or $0$ represe
 Similarly, **TMLE** can be represented by:
 
 $$\Psi_n^{tmle} = \frac{1}{n}\sum_{i=1}^{n}{Q_n^{\star}(1,w_i)}-\frac{1}{n}\sum_{i=1}^{n}Q_n^{\star}(0,w_i)$$ Notice that this takes the same form as g-computation, but the $\star$ symbols indicate the updated counterfactual outcomes $Q(1)$ and $Q(0)$.
+
+------------------------------------------------------------------------
 
 ### Worked example
 
@@ -846,6 +868,8 @@ Look how close that is to our *true* ATE! Now let's return to our estimation tab
 
 One thing to note is that TMLE and g-comp estimates are nearly identical. This is a good chance to review that what TMLE does is updates the g-comp estimates of $Q(1)$ and $Q(0)$ with this small amount $\epsilon$. You'll note in the above example $\epsilon \approx 0$. Again, this may be an artifact of how we generated the synthetic data. We invite readers to look at innovative data creation methods that tackle this limitation (such as the [CREDENCE framework](https://proceedings.mlr.press/v162/parikh22a.html "Parikh et al. (2022) 'Validating Causal Inference Methods'") of Parikh, Vajao, Xu, and Tchetgen Tchetgen).
 
+------------------------------------------------------------------------
+
 ## Double machine learning (a method on the horizon) {.tabset .tabset-fade .tabset-pills}
 
 ### Overview
@@ -854,25 +878,25 @@ We will close out by looking at a method on our radar as an exciting and recent 
 
 DML combines traditional treatment effect estimators with machine learning to control for confounding. The core idea of DML is to leverage high-quality machine learning algorithms in order to more flexibly model and control for confounders while isolating the effect of the treatment variable on the outcome. This model is particularly good at inferring treatment effects in large data sets with high numbers of covariates.
 
-DML uses [orthogonalization](https://medium.com/@rajathbharadwaj/what-is-orthogonalization-in-machine-learning-49ea27b696f1 "Orthogonalization is a a method employed in machine learning to isolate individual parameters which are interwoven in the original data set. If you are unfamiliar with this idea, the linked Medium article offers a good sequence of metaphors, including one about dials on a old-time radio."), in particular Neyman orthogonality, to generate estimators which are insensitive to small errors in the nuisance parameters (auxiliary parameters needs to adjust the main parameter estimation process to reduce bias, for example outcome model and propensity score). It also makes use of *sample splitting* (or dividing the data into multiple parts that are used to estimate different parameters, in order to reduce the risk of over-fitting) and *cross-fitting* (or doing multiple iterations of sample splitting and averaging the results).
+DML uses [orthogonalization](https://medium.com/@rajathbharadwaj/what-is-orthogonalization-in-machine-learning-49ea27b696f1 "Orthogonalization is a a method employed in machine learning to isolate individual parameters which are interwoven in the original data set. If you are unfamiliar with this idea, the linked Medium article offers a good sequence of metaphors, including one about dials on a old-time radio."), in particular Neyman orthogonality, to generate estimators which are insensitive to small errors in the nuisance parameters. Nuisance parameters are auxiliary parameters needed to adjust the main parameter estimation process in order to reduce bias (e.g., outcome model and propensity score). DML also makes use of *sample splitting* (or dividing the data into multiple parts that are used to estimate different parameters, in order to reduce the risk of over-fitting) and *cross-fitting* (or doing multiple iterations of sample splitting and averaging the results).
 
 The three primary steps of the DML algorithm are:
 
-1)  **Prediction:** Predict the outcome and treatment variable given a set of covariates, using high-performing machine learning tools (such as [random forest](https://www.ibm.com/topics/random-forest "Random forest is a machine learning algorithm that use multiple decision making trees to reach a single result. Read more about it on IBM's site, linked here.").
+1)  **Prediction:** Predict the outcome and treatment variable given a set of covariates, using high-performing machine learning tools (such as [random forest](https://www.ibm.com/topics/random-forest "Random forest is a machine learning algorithm that use multiple decision making trees to reach a single result. Read more about it on IBM's site, linked here.")).
 
 2)  **Residualization (orthogonalization):** Compute the residuals (difference between the predicted values and the actual values). See the *Bonus* tab in this section for an overview of a similar method, the *Frisch-Waugh-Lovell procedure*.
 
-3)  **Regression:** Estimate the target parameter (e.g. ATE) by regressing the residual of the outcome variables onto the residuals of the treatment variables. Regress $W$ on $V$ to estimate the target parameter $\psi$.
+3)  **Regression:** Estimate the target parameter (e.g. ATE) by regressing the residual of the outcome variables onto the residuals of the treatment variables. <!--Regress $W$ on $V$ to estimate the target parameter $\psi$.-->
+
+------------------------------------------------------------------------
 
 ### Notation
 
 In DML, the outcome and treatment variables are estimated using machine learning methods. These estimations are represented by:
 
-$$E[Y|Z] \space \text{ and } \space E[D|Z]$$
+$$E[Y|X] \space \text{ and } \space E[A|X]$$
 
 where $Y$ is outcome, $A$ is treatment, and $X$ is the set of covariates.
-
-<!-- I changed the variables used to keep consistent with the rest of the article  -->
 
 Residuals are defined as:
 
@@ -883,6 +907,8 @@ where $W$ is the residuals of the outcome variables and $V$ is the residuals of 
 The regression of $W$ onto $V$ can be represented as:
 
 $$W = \alpha + \psi + V + \epsilon$$
+
+------------------------------------------------------------------------
 
 ### Worked example
 
@@ -912,19 +938,21 @@ doubleml_plr$fit()
 doubleml_plr$summary()
 ```
 
-Again that's pretty close to the *true* ATE. Next, we'll look at how the three methods compare and consider how these results might vary more in across different data sets.
+Again that's pretty close to the *true* ATE. Next, we'll look at how the three methods compare and consider how these results might vary more across different data sets.
+
+------------------------------------------------------------------------
 
 ## Bonus technique: Frisch-Waugh-Lovell
 
 Established in the early twentieth century, the Frisch-Waugh-Lovell (FWL) theorem is a result in regression analysis used to estimate coefficients in multiple linear regression models. It provides a method for obtaining the coefficient of a single regressor in the presence of other regressors, and is similar to the method used in DML to calculate residualization. Below we will walk through an example using FWL to calculate the residuals of a treatment and outcome.
 
-First, we will regress A(T) on W(X) <!-- can we make these variables match above? -->
+First, we will regress $A(T)$ on $W(X)$:
 
 ```{r}
 a.hat <- glm(statin ~  age + gender + priorchol, data = ObsData)
 ```
 
-Then, we will regress Y on W (X):
+Then, we will regress $Y$ on $W(X)$:
 
 ```{r}
 y.hat <- glm(cholesterol ~  age + gender + priorchol, data = ObsData)
@@ -937,7 +965,7 @@ delta.a <- a.hat$residuals
 delta.y <- y.hat$residuals
 ```
 
-Last, from these results, we can regress residuals delta.y on residuals delta.a:
+Last, from these results, we can regress residuals `delta.y` on residuals `delta.a`:
 
 ```{r}
 Delta <- glm(delta.y ~ delta.a)
@@ -947,55 +975,80 @@ Delta$coefficients["delta.a"]
 
 Voila!
 
-# In closing... {.tabset .tabset-fade .tabset-pills}
+------------------------------------------------------------------------
 
-We've been through a lot today. We introduced several concepts and methods and worked though the estimation of a (fixed) causal parameter from a synthetic data set. We seeded in the effect **-20** and saw how all methods (aside from the crude estimate) do a good job of recovering the effect by accounting for confounding variables. Each method has unique strengths and weaknesses, but they all share the same goal of providing an unbiased estimate of the causal effect and take the same inputs for this example.
+# In closing ...
 
-## Benefits and shortcomings of each method
+We've been through a lot today. We introduced many concepts (including bias, confounders, counterfactuals, causal graphs, target trial emulation, and ATE) and five distinct methods for estimating treatment effect while accounting for bias. In the example, we worked though the estimation of a (fixed) causal parameter from a synthetic data set by first seeding in the effect (**-20)**, and then watching as all methods (aside from crude estimate) did a good job recovering the effect by accounting for confounding variables.
 
-0)  Crude Estimate:
+Despite their differences, all these methods aim to estimate the causal effect as accurately and *unbiasedly* as possible. They start with the same input data — observations of treatments, outcomes, and DAG-identified confounding variables — and apply different techniques to adjust for (remove) confounding to recover the causal parameter. Each method has unique strengths and weaknesses. Let's take a look at some of these.
 
--   Strengths: Simple and easy to compute.
--   Weaknesses: Prone to significant bias due to confounding variables, leading to misleading results.
+------------------------------------------------------------------------
 
-1)  Propensity Score Matching:
+##  {.tabset .tabset-fade .tabset-pills}
+### Benefits and shortcomings of each method
 
--   Strengths: Most intuitive and straightforward of adjustment methods. It matches treated and untreated units based on their propensity scores to balance the distribution of confounders.
--   Weaknesses: Can be inefficient if many units are unmatched. Matching quality can be poor if propensity scores are poorly estimated.
+#### 0. Crude estimation
 
-2)  Propensity Score Weighting:
+-   **Summary:** Direct (biased) comparison of the difference in outcomes between treated and untreated groups.
+-   **Strengths:** Simple and easy to compute.
+-   **Weaknesses:** Prone to significant bias due to confounding variables, leading to misleading results.
 
--   Strengths: Uses weights to standardize to a population without confounding (removing confounding/bias).
--   Weaknesses: Sensitive to extreme weights, which can increase variance and lead to instability in estimates.
+#### 1. Propensity score matching
 
-3)  G-Computation:
+-   **Summary:** Matches treated and untreated units based on their propensity scores to balance the distribution of confounders.
+-   **Strengths:** The most intuitive and straightforward of the adjustment methods.
+-   **Weaknesses:** Can be inefficient if many units are unmatched. Matching quality can be poor if propensity scores are poorly estimated.
 
--   Strengths: Provides a clear framework for causal inference by modeling the outcome directly.
--   Weaknesses: Relies heavily (entirely) on the correct specification of the outcome model. Misspecification can lead to biased estimates.
+#### 2. Propensity score weighting
 
-4)  Targeted Maximum Likelihood Estimation (TMLE):
+-   **Summary:** Uses propensity scores to standardize to the impact of inidividuals on average treatment effect based on covariates.
+-   **Strengths:** Balances covariates between treatment groups. Relatively straightforward and intuitive to interpret.
+-   **Weaknesses:** Sensitive to extreme weights, which can increase variance and lead to instability in estimates.
 
--   Strengths: Robust to model misspecification, provides double robustness, and leverages machine learning for nuisance parameter estimation. (Our favorite approach)
--   Weaknesses: More complex and less intuitive than propensity score methods. Relatively new and still gaining adoption/acceptance
+#### 3. G-computation
 
-5)  Double Machine Learning (DML):
+-   **Summary:** Uses machine learning (or other methods) to simulate potential outcomes.
+-   **Strengths:** Provides a clear framework for causal inference by modeling the outcome directly.
+-   **Weaknesses:** Relies heavily (entirely) on the correct specification of the outcome model. Misspecification can lead to biased estimates.
 
--   Strengths: Combines machine learning with causal methods for flexible, robust estimation. Can handle high-dimensional data.
--   Weaknesses: More complex and less intuitive than propensity score methods. Relatively new and still gaining adoption/acceptance
+#### 4. Targeted maximum likelihood estimation (TMLE):
 
-## Unified goal and inputs
+-   **Summary:** Extends g-computation by using a *clever covariate* and *fluctuation parameter* to target effects estimates through machine learning algorithms.
+-   **Strengths:** Provides double robustness, which means it can handle misspecifications. Leverages machine learning for nuisance parameter estimation. (Our favorite approach)
+-   **Weaknesses:** More complex and less intuitive than propensity score methods. Relatively new and still gaining adoption/acceptance.
 
-Despite their differences, all these methods aim to estimate the causal effect as accurately and *unbiasedly* as possible. They start with the same input data — observations of treatments, outcomes, and DAG-identified confounding variables — and apply their different techniques to adjust for/remove confounding and recover the causal parameter.
+#### 5. Double machine learning (DML):
 
-## The Role of Machine Learning
+-   **Summary:** Uses *orthogonalization*, *sample splitting*, and *cross-fitting* to calculate both outcomes and treatment variables to generate effect estimates through machine learning algorithms.
+-   **Strengths:** Combines machine learning with causal methods for flexible, robust estimation. Can handle high-dimensional data.
+-   **Weaknesses:** More complex and less intuitive than propensity score methods. Relatively new and still gaining adoption/acceptance.
+
+------------------------------------------------------------------------
+
+### The role of machine learning
 
 Machine learning plays a ever-increasing role in modern causal inference. It also enhances traditional methods by providing flexible, data-adaptive models that can better capture complex relationships in the data. In **all** these applications, machine learning helps improve the accuracy and robustness of causal estimates.
 
-<!-- Let's give a summary, What are the take aways conceptually? -->
+Despite our belief that machine learning algorithms are vital tools to make meaningful causal inferences from increasingly important real world data sets, we acknowledge a salient concern surrounding machine learning: that is problematic to trust and apply any algorithm without understanding its underlying mechanisms – particularly within pharmaceutical applications. One of our goals in offering this article is to ask you to take the first step into demystifying machine learning processes, so that our industry can better understand and implement this invaluable resource.
 
-## Worked example results summary
+Let's take a look at the places where machine learning algorithms were used in the methods we covered today:
 
-Let's take a look at all the ATE values we have thus far calculated:
+-   **Propensity score matching:** Andy: XX?
+
+-   **Propensity score weighting:** Andy: XX?
+
+-   **G-computation:** Ensemble machine learning algorithms (`SuperLearner` package) used to predict counterfactuals.
+
+-   **TMLE:** Ensemble machine learning algorithms (`SuperLearner` package) used to predict counterfactuals and to determine the *fluctuation parameter*.
+
+-   **DML:** High-performing machine learning tools (e.g., [random forest](https://www.ibm.com/topics/random-forest "Random forest is a machine learning algorithm that use multiple decision making trees to reach a single result. Read more about it on IBM's site, linked here.")) used to predict outcome and treatment variables.
+
+------------------------------------------------------------------------
+
+### Worked example results summary
+
+Let's take a look at all the ATE values we calculated in the worked example:
 
 | Method                                             |                           ATE (or ATT)                           |
 |-----------------------------------------------|:-----------------------:|
@@ -1007,8 +1060,6 @@ Let's take a look at all the ATE values we have thus far calculated:
 | g-computation                                      | `r round(ate_gcomp <- mean(dat_g.comp$Q_1 - dat_g.comp$Q_0), 4)` |
 | TMLE                                               |             `r round(tmle_fit$estimates$ATE$psi, 4)`             |
 | DML                                                |                 `r round(doubleml_plr$coef, 4)`                  |
-
-<!-- and theoretically? -->
 
 ```{r}
 plot(c(1,2,3,4,5,6), c(naive$coefficients["statin"], 
@@ -1027,9 +1078,13 @@ abline(h = True_ATE, lty = 2, lwd = 2, col = "grey")
 text(2, .26, "grey line = 'true value'")
 ```
 
+The differences we observe today are relatively small but remember that we made use of a fairly simple data set. We encourage you to either try setting up more variable synthetic data or apply these methods to a real data set. When working with more complicated, variable, or incomplete data, you will begin to see substantial differences in the capacity of each of these methods. Notice, though, even in a simple data set, the methods that apply machine learning algorithms (g-computation, TMLE, DML) are better approximators of the true ATE.
+
+------------------------------------------------------------------------
+
 # References
 
-<!-- fill out with all linked articles as well? -->
+<!-- AH: still to fill out with all linked articles as well once we have a final set of links. -->
 
 1.  Rosenbaum, P. R., & Rubin, D. B. (1983). ["The central role of the propensity score in observational studies for causal effects."](https://academic.oup.com/biomet/article/70/1/41/240879 "Rosenbaum, P. R., & Rubin, D. B. (1983). 'The central role of the propensity score in observational studies for causal effects,' Biometrika, 70(1), 41-55: 'The propensity score is the conditional probability of assignment to a particular treatment given a vector of observed covariates. Both large and small sample theory show that adjustment for the scalar propensity score is sufficient to remove bias due to all observed covariates...'") *Biometrika*, 70(1), 41-55.
 2.  Austin, P. C. (2011). ["An introduction to propensity score methods for reducing the effects of confounding in observational studies."](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3144483/ "Austin, P. C. (2011). 'An Introduction to Propensity Score Methods for Reducing the Effects of Confounding in Observational Studies,' 46(3), 399-424: 'The propensity score is the probability of treatment assignment conditional on observed baseline characteristics. The propensity score allows one to design and analyze an observational (nonrandomized) study so that it mimics some of the particular characteristics of a randomized controlled trial...'") *Multivariate Behavioral Research*, 46(3), 399-424.
