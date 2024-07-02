@@ -1,7 +1,7 @@
 ---
 title: "Crash course on confounding, bias, and deconfounding remedies using R"
 author: "Andy Wilson and Aimee Harrison"
-date: "July 1$^{st}$, 2024"
+date: "July 2$^{nd}$, 2024"
 output:
   html_document:
     toc: true
