@@ -98,7 +98,7 @@ library(DoubleML)
 library(mlr3)
 library(mlr3learners)
 set.seed(12345)
-nn = 5000 #Simulation(s) sample size
+nn = 500 #Simulation(s) sample size
 ```
 
 ------------------------------------------------------------------------
