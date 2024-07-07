@@ -164,6 +164,9 @@ $$
 
 ### Overview
 
+Randomized controlled trials (RCTs) are considered the gold standard in clinical research because random assignment of treatment ensures that treatment groups are comparable (both across observed and unobserved covariates). Note that this isn't a free ride to causal estimation, and, perhaps surprisingly, RCTs, like any other real world study, generate data with missing counterfactual outcomes - however, randomization ensures that those missing values are due to chance. 
+
+
 Unlike in randomized controlled trials (RCTs), where random assignment of treatment ensures that treatment groups are comparable, observational studies rely on study design and statistical techniques to account for differences between treated and untreated groups. One approach to estimating causal effects in observational studies is to emulate the conditions of a target randomized trial as closely as possible. This process, often referred to as [target trial emulation](https://journals.lww.com/jasn/fulltext/2023/08000/target_trial_emulation_to_improve_causal_inference.5.aspx "For a deeper dive into target trial emulation, see Fu (2023) 'Target Trial Emulation to Improve Causal Inference from Observational Data: What, Why, and How?'."), involves designing the observational study to mimic the hypothetical RCT that would answer the causal question of interest.
 
 Regardless of whether the data set is derived from RCTs or observational studies, we establish the *legitimacy* of our causal claims by satisfying [causal identifiability assumptions](https://www.hsph.harvard.edu/miguel-hernan/wp-content/uploads/sites/1268/2024/01/hernanrobins_WhatIf_2jan24.pdf "Causal identifiability assumptions provide the set of conditions that allow us to estimate effects measures. For a more in-depth exploration of causal identifiability assumptions, see chapter three in Hernán and Robins (2010), Causal Inference: What If"). These are, briefly:
@@ -366,15 +369,25 @@ $$\% \space bias =\frac{\widehat{\psi} - \psi }{\psi} * 100\%$$
 
 ------------------------------------------------------------------------
 
-We want to pause and make an important distinction: $E[Y|A = 1] - E[Y|A = 0]$ is not equivalent to $E[Y(1)] - E[Y(0)]$. The former represents the difference of outcomes for actual treatments, which includes a lot of bias. The second represents the difference of outcomes for counterfactual treatments, in which bias has been corrected.
+We want to pause and make an important distinction: $E[Y|A = 1] - E[Y|A = 0]$ is not necessarily equivalent to $E[Y(1)] - E[Y(0)]$. The former represents the difference of expected outcomes for *observed* treatments, which often includes a lot of bias due to confounding factors. The second represents the difference of expected outcomes for counterfactual treatments, representing the causal effect estimate ~ the answer to `what would have happened had we intervened`.
 
-Let's consider an example where a benevolent CEO wants to understand the role of salary in happiness for all of his employees. Let's say all of his employees fit into two pay bands: one is considered high, one is considered low, so we can model pay as $A=1$ (high pay band) or $A=0$ (low pay band).
+Handy guide to notation:
 
-He conducts a survey where he asks all the employees to rank their happiness on a scale of 1-100 (observed $Y$). We can compare the average observed happiness within each pay band, and we get the values $E[Y|A=1]$ (high pay band) and $E[Y|A=0]$.
+1. **Observed Outcomes Notation**: $E[Y|A = 1] - E[Y|A = 0]$ represents the expected difference in outcomes between the group that actually received the treatment ($A = 1$) and the group that did not ($A = 0$). This is susceptible to bias because the groups may differ in ways other than the treatment they received.
 
-Now let's say he compares the two averages and determines he needs to intervene. The CEO is benevolent, but he is also random. He takes 75% and imposes a huge salary increase across the low pay band. . . [ANDY: you lost me here – can you fill in the gap to get from here to the E[Y(1) and E[Y(0)]???]
+2. **Counterfactual Outcomes Notation**: $E[Y(1)] - E[Y(0)]$, also denoted as $E[Y|do(A = 1)] - E[Y|do(A = 0)]$, represents the expected difference in outcomes if we could hypothetically assign the treatment ($A = 1$) or not ($A = 0$) to the same group of individuals. This is the causal effect we are interested in, as it reflects the true effect of the treatment after accounting for confounding.
 
-This represents $E[Y(1)]$ and $E[Y(0)]$
+3. **alt Counterfactual Outcomes Notation**: $E[Y^{a=1}] - E[Y^{a=0}]$, also represents the expected difference in outcomes under the counterfactual scenarios where the treatment is *assigned* ($a = 1$) or *not assigned* ($a = 0$).
+
+
+Let's practice notation with an example of a (somewhat benevolent) CEO. She observes the happiness ($Y$) of her employees and how it relates to their *observed* salary ($A$), which can be either high ($A = 1$) or low ($A = 0$). Initially, she observes the happiness levels of employees based on their current salaries: $E[Y|A = 1]$ and $E[Y|A = 0]$. This observed difference, $E[Y|A = 1] - E[Y|A = 0]$, might include bias because employees with higher salaries might also have other advantages contributing to their happiness.
+
+
+Now, suppose the CEO decides to *intervene*. She randomly selects a group of employees and increases their salaries to high ($A = 1$), while others remain at low salary ($A = 0$). By doing this, she creates a scenario where the assignment of high or low salary is random, akin to a randomized controlled trial.
+
+In this intervention scenario, we are interested in the counterfactual outcomes: $E[Y(1)]$ (the expected happiness if all employees received high salaries) and $E[Y(0)]$ (the expected happiness if all employees received low salaries). The difference, $E[Y(1)] - E[Y(0)]$, represents the *causal* effect of high salary on happiness, free from confounding bias.
+
+Notice in this scenario we'd still have to consider the identifiability assumptions to conclude whether our association would have a causal interpretation. 
 
 ------------------------------------------------------------------------
 
@@ -899,7 +912,7 @@ One thing to note is that, in our synthetic data, TMLE and g-comp estimates are 
 
 ### Overview
 
-We will close out by looking at a method on our radar as an exciting and recent addition to the causal machine learning toolkit for debiasing estimates and providing valid (causal) statistical inference: [double machine learning (DML)](https://academic.oup.com/ectj/article/21/1/C1/5056401 "While we provide a brief introduction in this section, see Chernozhukov, et al. (2018) for an excellent, but highly-technical paper on Double Machine Learning.").
+We will close out by looking at a method on our radar as an exciting and recent addition to the causal machine learning toolkit for de-biasing estimates and providing valid (causal) statistical inference: [double machine learning (DML)](https://academic.oup.com/ectj/article/21/1/C1/5056401 "While we provide a brief introduction in this section, see Chernozhukov, et al. (2018) for an excellent, but highly-technical paper on Double Machine Learning.").
 
 DML combines traditional treatment effect estimators with machine learning to control for confounding. The core idea of DML is to leverage high-quality machine learning algorithms in order to more flexibly model and control for confounders while isolating the effect of the treatment variable on the outcome. This model is particularly good at inferring treatment effects in large data sets with high numbers of covariates.
 
