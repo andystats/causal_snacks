@@ -650,11 +650,11 @@ There are three steps to g-computation:
 
 ### Notation
 
-Observed outcome and counterfactual outcome for treated individuals ($T=1$) are represented by: $$Y, {Y}(0)$$ where $Y$ represents the observed outcome and $Y(0)$ represents the counterfactual treatment had they not received treatment ($T=0$).
+Observed outcome and counterfactual outcome for treated individuals ($T=1$) are represented by: $$Y, {Y}(1)$$ where $Y$ represents the observed outcome and $Y(1)$ represents the counterfactual treatment had they received treatment ($T=1$).
 
 Observed outcome and counterfactual outcome for individuals who did not receive treatment ($T=0$) are represented by:
 
-$$Y, {Y}(1)$$ where $Y(1)$ represents the counterfactual treatment had they received treatment ($T=1$).
+$$Y, {Y}(0)$$ where $Y(0)$ represents the counterfactual treatment had they not received treatment ($T=0$).
 
 Mathematically, the three steps of g-computation can be written as:
 
@@ -664,11 +664,11 @@ Mathematically, the three steps of g-computation can be written as:
 
 2.  **Predicting counterfactuals** (where $Q_0$ and $Q_1$ represent the counterfactuals)
 
-    $$ Q_1 = \widehat{Y}(T=1, X=x) \text{   and   } Q_0 = \widehat{Y}(T=0, X=x) $$
+    $$ Q_1 = \widehat{Y}(1, X=x) \text{   and   } Q_0 = \widehat{Y}(0, X=x) $$
 
 3.  **Averaging the predictions**
 
-$$ \text{ATE} = \frac{1}{N} \sum_{i=1}^{N} \left[ \widehat{Y_i}(T=1) - \widehat{Y_i}(T=0) \right] $$
+$$ \text{ATE} = \frac{1}{N} \sum_{i=1}^{N} \left[ \widehat{Y_i}(1) - \widehat{Y_i}(0) \right] $$
 
 Note on notation: As we mentioned in the introduction, in this overview of g-computation and in the next section on TMLE, we will sometimes use $W$ and $X$ interchangeably to refer to the set of confounding variables. In our worked example, both $X$ and $W$ will refer to the set of variables (age, gender, and prior cholesterol).
 
