@@ -1486,184 +1486,250 @@ real world effectiveness evaluation</h3>
 </div>
 
 
-<p>I imagine there are two core concepts we’d want to convey: One is
-“what IS a policy”? And, simply stated, a policy is any kind of rule ~
-and what makes it dynamic is that is listens to something else - so a
-static policy is a special case, and the kind we <em>usually</em> deal
-with: like “always treat” vs. “never treat.” And a rule or policy could
-be “if a patient’s hemoglobin dips below 10, start treating.” (and
-treatment could be like a transfusion - this is really interesting work
-Jenny Alderden introduced me to in what’s called “permissive anemia.”
-The idea is that blood transfusions are hard on the body and so we might
-want to find a balance between transfusing too early/too often and too
-little/too late.)</p>
-<p>Could imagine the top graph is some rule for a patient and bottom
-graph is their risk of some other outcome, like readmission or
-death.</p>
-<p>Untitled_Artwork 49.png</p>
-<p>We could also introduce the idea of counterfactuals and maybe even
-synthetic controls - I love some of the graphs and how good they are at
-telling the story of “what if” - attached pdfs and the synthetic
-controls exampleb.R file.</p>
-<p>I have an abstract accepted for ISPOR EU on this topic - but it’s
-kind of all over the place and I think we can just harvest it for parts
-(all the other stuff attached).</p>
-<p>Question: would you like to go through a real-world example, say with
-the MIMIC 4 data? Or should we keep it all synthetic?</p>
-<div id="let-me-know-if-you-think-this-is-a-good-direction-or-if-something-has-inspired-you---we-have-all-the-blue-sky" class="section level2">
-<h2>Let me know if you think this is a good direction or if something
-has inspired you - we have all the blue sky :)</h2>
-</div>
-<div id="heading-1" class="section level2 tabset tabset-fade tabset-pills">
-<h2 class="tabset tabset-fade tabset-pills">Heading 1</h2>
-<blockquote>
-<p>Epigraph <strong>EPIS</strong></p>
-</blockquote>
-<p>txt filler</p>
 <hr />
-<div id="subheads" class="section level3">
-<h3>Subheads</h3>
-<p>text filler</p>
-<hr />
+<p>This is not fully structured, very work in progress. But drafting the
+parts here.</p>
+<div id="all-the-concepts-we-want-to-suture" class="section level2">
+<h2>All the concepts we want to suture</h2>
+<div id="dynamic-vs.-static-treatment-policies" class="section level3">
+<h3>Dynamic vs. Static Treatment Policies</h3>
+<p>Treatment policies are structured guidelines or protocols used by
+healthcare providers to determine the appropriate strategy for managing
+certain indications. Based on evidence from clinical research, these
+policies provide a framework for decision-making, helping clinicians
+choose the best treatment options while considering factors like
+efficacy, safety, and cost-effectiveness.</p>
+<p>Static treatment policies are fixed medical protocols that prescribe
+a uniform approach to treating specific conditions, without accounting
+for individual patient variability. These policies often dictate a
+consistent treatment method, such as “always treat” or “never treat,”
+regardless of changes in a patient’s condition or response to therapy.
+While they can simplify clinical decision-making and ensure uniformity
+in care, a lack of responsiveness often leads to either overtreatment or
+undertreatment.</p>
+<p>Following a the rise of evidence-based medicine advancements and
+increased access to electronic health records (EHRs) that support
+continuous monitoring of patient progress, the 21st century has seen a
+shift towards more personalized medical care, including dynamic
+treatment policies. Dynamic treatment policies are flexible medical
+protocols that adapt to the changing conditions and responses of
+individual patients over time. Unlike static policies, they allow
+healthcare providers to modify treatment plans based on real-time data,
+patient feedback, and evolving clinical circumstances. By incorporating
+ongoing assessments and adjustments, dynamic treatment policies can
+enhance the effectiveness and efficiency of medical care, reducing risks
+of overtreatment or undertreatment.</p>
 </div>
-<div id="potentially-useful" class="section level3">
-<h3>Potentially useful</h3>
-<p>Examples</p>
-<ul>
-<li><span class="math inline">\(A\)</span> or <span class="math inline">\(T\)</span> to denote treatment variables.</li>
-<li><span class="math inline">\(W\)</span> or <span class="math inline">\(X\)</span> to denote covariates or sets of
-confounders.</li>
-</ul>
+<div id="longitudinal-modifiable-treatment-policies" class="section level3">
+<h3>Longitudinal modifiable treatment policies</h3>
+<p>Longitudinal modifiable treatment policies (LMTPs) are a type of
+dynamic treatment policy providing adaptive healthcare strategies that
+evolve over time, based on continuous monitoring and assessment of a
+patient’s health status. These policies leverage data-driven insights
+from regular health evaluations and patient feedback to adjust treatment
+plans. They are particularly useful in managing chronic conditions,
+allowing for proactive interventions and adjustments in response to
+changes in the patient’s condition or emerging medical evidence.</p>
+<p>LMTPs can be developed using a variety of <a href="https://www.biostatistics.ca/crash-course-on-confounding-bias-and-deconfounding-remedies-using-r/" title="For a primer in causal inference methods, see our &#39;Crash course in confounding, bias, and deconfounding remedies using R.&#39;">causal
+inference methods</a> adapted to address the complexities of
+longitudinal data. Traditional approaches such as longitudinal
+propensity score methods, marginal structural models, and instrumental
+variable analysis have been instrumental tools to estimate causal
+effects by accounting for confounding variables over time. However,
+these methods often face limitations in handling complex,
+high-dimensional data and time-varying confounders. Longitudinal
+Targeted Maximum Likelihood Estimation (LTMLE) offers a more powerful
+alternative by integrating machine learning techniques to provide robust
+and efficient causal estimates. In this paper, we focus on LTMLE due to
+its ability to adaptively model dynamic treatment regimes and improve
+the precision of causal inferences in longitudinal studies.</p>
+</div>
+<div id="longitudinal-targeted-maximum-likelihood-estimation-lmtle" class="section level3">
+<h3>Longitudinal targeted maximum likelihood estimation (LMTLE)</h3>
+<p>LTMLE is s a statistical method used to estimate the effects of
+time-varying treatments or exposures in longitudinal data. It is
+particularly useful in settings where there are complex relationships
+between variables, such as time-dependent confounding, which can bias
+traditional estimation methods. LTMLE combines machine learning
+algorithms with targeted maximum likelihood estimation to provide robust
+and efficient estimates of causal effects. The method involves
+constructing a series of models to predict both the outcome and the
+treatment assignment, adjusting for confounders at each time point. By
+iteratively updating these models, LTMLE aims to reduce bias and improve
+the accuracy of causal effect estimates.</p>
+<div id="steps-for-lmtle-from-chatgpt" class="section level4">
+<h4>Steps for LMTLE from ChatGPT</h4>
 <ol style="list-style-type: decimal">
-<li>create (plausible) synthetic data so that we can know the ground
-truth treatment effect we’re trying to estimate;</li>
-<li>estimate the treatment effect without any attempt to remedy
-confounding (which will allow us to establish our baseline
-<em>biased</em> estimate); and</li>
-<li>apply and compare traditional (propensity scores, g-computation) and
-emerging (TMLE, DML) statistical methods to recover the unbiased
-effect.</li>
+<li>Data Preparation: Collect and organize longitudinal data, ensuring
+it includes repeated measures of outcomes, treatments, and potential
+confounders over time; Preprocess the data to handle missing values and
+ensure consistency across time points.</li>
+<li>Model Specification:Specify models for the outcome, treatment, and
+censoring processes; These models can be parametric or non-parametric,
+often incorporating machine learning algorithms to capture complex
+relationships.</li>
+<li>Initial Estimation: Use the specified models to obtain initial
+estimates of the outcome and treatment processes. This involves
+predicting the outcome given the treatment and confounders at each time
+point.</li>
+<li>Targeting Step: Apply the targeting step to update the initial
+estimates. This involves solving a set of estimating equations to adjust
+the initial estimates, reducing bias and improving efficiency; The
+targeting step uses clever covariates, which are derived from the
+treatment and censoring models, to refine the outcome model.</li>
+<li>Iterative Updates: Iteratively update the estimates by repeating the
+targeting step until convergence is achieved. This ensures that the
+estimates are as accurate and unbiased as possible.</li>
+<li>Variance Estimation: Estimate the variance of the causal effect
+estimates using techniques such as the influence curve, which provides a
+measure of the uncertainty associated with the estimates.</li>
+<li>Sensitivity Analysis: Conduct sensitivity analyses to assess the
+robustness of the results to different model specifications and
+assumptions about unmeasured confounding.</li>
 </ol>
-<pre class="r"><code>library(simcausal)
-library(ranger)
-library(tidyverse)</code></pre>
-<pre><code>## ── Attaching core tidyverse packages ──────────────────────── tidyverse 2.0.0 ──
-## ✔ dplyr     1.1.4     ✔ readr     2.1.5
-## ✔ forcats   1.0.0     ✔ stringr   1.5.1
-## ✔ ggplot2   3.5.1     ✔ tibble    3.2.1
-## ✔ lubridate 1.9.3     ✔ tidyr     1.3.1
-## ✔ purrr     1.0.2     
-## ── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
-## ✖ dplyr::filter() masks stats::filter()
-## ✖ dplyr::lag()    masks stats::lag()
-## ℹ Use the conflicted package (&lt;http://conflicted.r-lib.org/&gt;) to force all conflicts to become errors</code></pre>
-<pre class="r"><code>library(ggdag)</code></pre>
-<pre><code>## 
-## Attaching package: &#39;ggdag&#39;
-## 
-## The following object is masked from &#39;package:stats&#39;:
-## 
-##     filter</code></pre>
-<pre class="r"><code>library(MatchIt)
-library(WeightIt)
-library(survey)</code></pre>
-<pre><code>## Loading required package: grid
-## Loading required package: Matrix
-## 
-## Attaching package: &#39;Matrix&#39;
-## 
-## The following objects are masked from &#39;package:tidyr&#39;:
-## 
-##     expand, pack, unpack
-## 
-## Loading required package: survival
-## 
-## Attaching package: &#39;survey&#39;
-## 
-## The following object is masked from &#39;package:WeightIt&#39;:
-## 
-##     calibrate
-## 
-## The following object is masked from &#39;package:graphics&#39;:
-## 
-##     dotchart</code></pre>
-<pre class="r"><code>library(tableone)
-library(cobalt)   </code></pre>
-<pre><code>##  cobalt (Version 4.5.5, Build Date: 2024-04-02)
-## 
-## Attaching package: &#39;cobalt&#39;
-## 
-## The following object is masked from &#39;package:MatchIt&#39;:
-## 
-##     lalonde</code></pre>
-<pre class="r"><code>library(PSweight)  
-library(tmle)</code></pre>
-<pre><code>## Loading required package: glmnet
-## Loaded glmnet 4.1-8
-## Loading required package: SuperLearner
-## Loading required package: nnls
-## Loading required package: gam
-## Loading required package: splines
-## Loading required package: foreach
-## 
-## Attaching package: &#39;foreach&#39;
-## 
-## The following objects are masked from &#39;package:purrr&#39;:
-## 
-##     accumulate, when
-## 
-## Loaded gam 1.22-3
-## 
-## Super Learner
-## Version: 2.0-29
-## Package created on 2024-02-06
-## 
-## Welcome to the tmle package, version 2.0.1.1
-## 
-## Use tmleNews() to see details on changes and bug fixes</code></pre>
-<pre class="r"><code>library(DoubleML)
-library(mlr3)
-library(mlr3learners)
-set.seed(12345)
-nn = 5000 #Simulation(s) sample size</code></pre>
-<hr />
-<p><strong>Exchangeability</strong> <em>(treated and untreated groups
-are comparable)</em> is represented as:</p>
-<p><span class="math display">\[Y(t) \perp\!\!\!\perp T \mid W\]</span>
-where the potential outcome <span class="math inline">\(Y(t)\)</span> is
-independent of the treatment <span class="math inline">\(T\)</span>
-given the covariates <span class="math inline">\(W\)</span>.</p>
-<p><strong>Positivity</strong> <em>(each subject has a positive
-probability of receiving each treatment)</em> is defined as:</p>
-<p><span class="math display">\[P(T = t \mid W = w) &gt; 0\]</span> for
-all treatment levels <span class="math inline">\(t\)</span> and
-covariates <span class="math inline">\(w\)</span>. (In other words,
-there should be no combination of covariates for which a treatment
-probability is zero.)</p>
 </div>
 </div>
-<div id="about-the-authors" class="section level2">
-<h2>About the authors</h2>
-<p><strong>Andy Wilson</strong> received his PhD in Public Health and
-MStat in Biostatistics from the University of Utah School of Medicine.
-He is currently adjunct faculty in the Department of Family and
-Preventive Medicine at the University of Utah and Head of Innovative RWD
-Analytics at Parexel, a large CRO. He is interested in emerging causal
-methods and how they help advance real-world data analytics.</p>
-<p><strong>Aimee Harrison</strong> holds a BS in Writing and Humanistic
-Studies from MIT and an MFA in Writing and Poetics from the University
-of Washington. She is a project manager at Navidence and head of product
-at Asclepia, both real-world data technology companies.</p>
-<hr />
+<div id="counterfactual-outcomes-and-directed-acyclic-graphs-dags" class="section level3">
+<h3>Counterfactual outcomes and Directed Acyclic Graphs (DAGs)</h3>
+<p>Counterfactual outcomes refer to the hypothetical scenarios of what
+would have happened to an individual if they had received a different
+treatment or intervention than they actually did. In the context of
+longitudinal analysis, counterfactual outcomes are crucial for
+understanding the causal effects of time-varying treatments over time.
+By comparing the observed outcomes with these hypothetical scenarios,
+researchers can estimate the impact of different treatment strategies on
+patient trajectories. This approach helps in identifying the most
+effective interventions and informing the development of adaptive
+LMTPs.</p>
+<p>Directed Acyclic Graphs (DAGs) are graphical representations used to
+depict the causal relationships between variables in a system. They
+consist of nodes, representing variables, and directed edges, indicating
+causal influences, with the constraint that there are no cycles, meaning
+you cannot return to a node by following the directed edges. DAGs are
+valuable for visualizing assumptions about causal structures,
+identifying confounders, and guiding statistical analysis.</p>
+<p>In longitudinal studies, DAGs help model the complex temporal
+relationships between time-varying treatments, outcomes, and
+confounders. They clarify the causal pathways and dependencies that need
+to be considered when estimating causal effects over time. In LTMLE,
+DAGs are used to identify the appropriate adjustment sets for
+controlling confounders at each time point, ensuring that the causal
+effects are estimated accurately. By providing a clear framework for
+understanding the causal structure, DAGs guide the specification of
+models and the selection of variables in LTMLE, enhancing the robustness
+and validity of the causal inferences drawn from longitudinal data.</p>
 </div>
-<div id="references" class="section level2">
-<h2>References</h2>
-<ol start="10" style="list-style-type: decimal">
-<li>Austin, P. C. (2011). <a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3144483/">An
-introduction to propensity score methods for reducing the effects of
-confounding in observational studies.</a> <em>Multivariate Behavioral
-Research</em>. 46(3):399-424.</li>
+<div id="visualizations-and-interpretations" class="section level3">
+<h3>Visualizations and interpretations</h3>
+<p>Clinicians often use various visualization tools to understand
+treatment trajectories and the effects of LMTPs on patient-specific
+interventions. These visualizations help in interpreting complex data
+and making informed decisions. Some common types include:</p>
+<p>[Put the ones of interest below in pill tabs?]</p>
+<ol style="list-style-type: decimal">
+<li><p>Time-Series Plots: These plots display patient outcomes and
+treatment interventions over time, allowing clinicians to observe
+trends, patterns, and changes in response to treatments.
+<strong>Supported by LMTLE</strong>: By providing robust estimates of
+treatment effects over time, LTMLE can help generate time-series plots
+that display how patient outcomes evolve with different treatment
+strategies.</p></li>
+<li><p>Trajectory Plots: These plots show the progression of individual
+patients or groups of patients over time, highlighting how different
+treatment strategies impact health outcomes. <strong>Supported by
+LMTLE</strong>: LTMLE’s ability to model dynamic treatment regimes
+allows for the visualization of individual or group trajectories,
+showing the impact of treatments on patient outcomes over time.</p></li>
+<li><p>Heatmaps: Heatmaps can be used to visualize the intensity or
+frequency of interventions and outcomes across different time points,
+providing a quick overview of treatment patterns.</p></li>
+<li><p>Survival Curves: These curves illustrate the probability of an
+event (such as recovery or relapse) over time, helping clinicians assess
+the effectiveness of different treatment policies. <strong>Supported by
+LMTLE</strong>: LTMLE can be used to estimate survival probabilities
+under different treatment scenarios, which can then be visualized using
+survival curves to assess the effectiveness of interventions.</p></li>
+<li><p>Decision Trees: Decision trees can be used to visualize the
+decision-making process involved in LMTPs, showing how different patient
+characteristics and treatment responses lead to specific
+interventions.</p></li>
+<li><p>Network Diagrams: These diagrams can represent the relationships
+between various treatments, outcomes, and patient characteristics,
+helping clinicians understand the broader context of treatment
+effects.</p></li>
 </ol>
+</div>
+</div>
+<div id="notes-for-the-worked-example" class="section level2">
+<h2>Notes for the worked example</h2>
+<ul>
+<li><p>Demonstrate how dynamic strategies can optimize health outcomes,
+using Ozempic treatment as an example. // Example: In diabetes
+management, clinicians adjust treatment based on evolving metrics like
+A1C levels, rather than sticking to a rigid protocol.</p></li>
+<li><p>Overview of LTMLE and LMTP Methods: Include brief technical
+details on how each method models longitudinal data in R.</p></li>
+</ul>
+<ol start="4" style="list-style-type: decimal">
+<li><p>Ozempic Case Study Context and Hypothesis: Ozempic, a medication
+for type 2 diabetes, may show different benefits based on
+patient-specific metrics such as A1C levels or BMI changes over time.
+Experimental Setup: Scenario 1: “Always on” Ozempic (all patients
+continuously receive treatment). Scenario 2: “Always off” Ozempic
+(treatment is never initiated). Dynamic Policy Example: Treatment is
+initiated when A1C &gt; 7 and discontinued when normalized. Data
+Structure and Simulation: Explain the synthetic dataset with
+time-varying covariates, treatment indicators, and outcomes: L1,L2:
+Covariates (e.g., A1C, BMI). A1,A2: Treatment indicators (whether the
+patient received Ozempic). Y: Health outcome (e.g., reduction in A1C
+levels or long-term health metrics).</p></li>
+<li><p>Implementation and Results Using R for Analysis: Code snippets
+for generating synthetic data and applying LTMLE/LMTP. Highlight
+challenges (e.g., data formatting, handling missing data). Discuss the
+importance of ensuring DAG consistency in dynamic treatment models.
+Comparison of Static and Dynamic Policies: Present results: Compare
+health outcomes across “always on,” “always off,” and dynamic policies.
+Visualization: Include plots of predicted outcomes over time under
+different policies (pre- and post-treatment). Show counterfactual
+outcomes (e.g., what would have happened had the patient stopped
+treatment earlier).</p></li>
+</ol>
+</div>
+<div id="discussion" class="section level2">
+<h2>Discussion</h2>
+<div id="clinical-implications" class="section level3">
+<h3>Clinical Implications</h3>
+<p>Highlight how dynamic policies align with personalized medicine.
+Benefits of real-time data use to adjust treatment, particularly in
+chronic conditions like diabetes.</p>
+</div>
+<div id="challenges-and-limitations" class="section level3">
+<h3>Challenges and Limitations</h3>
+<p>Data transformation issues (e.g., converting from long to wide
+format). Computational complexity of TMLE/LMTP in large datasets. The
+need for domain expertise to specify appropriate treatment rules and
+covariates.</p>
+</div>
+</div>
+<div id="tools-and-future-directions" class="section level2">
+<h2>Tools and Future Directions</h2>
+<p>Dashboard for Dynamic Treatment Policy Evaluation: Describe the
+R-Shiny-based dashboard that simplifies the application of LTMLE/LMTP.
+Encourage researchers and clinicians to explore the open-source
+dashboard for their own datasets.</p>
+</div>
+<div id="conclusion" class="section level2">
+<h2>Conclusion</h2>
+<p>Reiterate the importance of moving beyond static treatment
+comparisons. Emphasize the role of dynamic treatment policies in
+real-world decision-making. Encourage clinicians to adopt these advanced
+methods to optimize patient outcomes.</p>
+</div>
+<div id="references-and-suggested-reading" class="section level2">
+<h2>References and suggested reading</h2>
+<p>Include references to the methodology (TMLE/LMTP) and clinical
+studies supporting Ozempic. Acknowledge the contributors and
+organizations (e.g., Parexel, ISPOR).</p>
 </div>
 
 
