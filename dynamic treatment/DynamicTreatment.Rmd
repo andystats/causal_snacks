@@ -1,0 +1,131 @@
+---
+title: "Beyond always treat"
+subtitle: "How dynamic treatment strategies open a door for real world effectiveness evaluation"
+author: 
+date: 
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    collapsed: false
+    toc_depth: 2
+---
+
+___________________
+
+This is not fully structured, very work in progress. But drafting the parts here.
+
+## All the concepts we want to suture
+
+### Dynamic vs. Static Treatment Policies
+
+Treatment policies are structured guidelines or protocols used by healthcare providers to determine the appropriate strategy for managing certain indications. Based on evidence from clinical research, these policies provide a framework for decision-making, helping clinicians choose the best treatment options while considering factors like efficacy, safety, and cost-effectiveness.
+
+Static treatment policies are fixed medical protocols that prescribe a uniform approach to treating specific conditions, without accounting for individual patient variability. These policies often dictate a consistent treatment method, such as "always treat" or "never treat," regardless of changes in a patient's condition or response to therapy. While they can simplify clinical decision-making and ensure uniformity in care, a lack of responsiveness often leads to either overtreatment or undertreatment. 
+
+Following a the rise of evidence-based medicine advancements and increased access to electronic health records (EHRs) that support continuous monitoring of patient progress, the 21st century has seen a shift towards more personalized medical care, including dynamic treatment policies. Dynamic treatment policies are flexible medical protocols that adapt to the changing conditions and responses of individual patients over time. Unlike static policies, they allow healthcare providers to modify treatment plans based on real-time data, patient feedback, and evolving clinical circumstances. By incorporating ongoing assessments and adjustments, dynamic treatment policies can enhance the effectiveness and efficiency of medical care, reducing risks of overtreatment or undertreatment.
+
+### Longitudinal modifiable treatment policies
+
+Longitudinal modifiable treatment policies (LMTPs) are a type of dynamic treatment policy providing adaptive healthcare strategies that evolve over time, based on continuous monitoring and assessment of a patient's health status. These policies leverage data-driven insights from regular health evaluations and patient feedback to adjust treatment plans. They are particularly useful in managing chronic conditions, allowing for proactive interventions and adjustments in response to changes in the patient's condition or emerging medical evidence. 
+
+LMTPs can be developed using a variety of [causal inference methods](https://www.biostatistics.ca/crash-course-on-confounding-bias-and-deconfounding-remedies-using-r/ "For a primer in causal inference methods, see our 'Crash course in confounding, bias, and deconfounding remedies using R.'") adapted to address the complexities of longitudinal data. Traditional approaches such as longitudinal propensity score methods, marginal structural models, and instrumental variable analysis have been instrumental tools to estimate causal effects by accounting for confounding variables over time. However, these methods often face limitations in handling complex, high-dimensional data and time-varying confounders. Longitudinal Targeted Maximum Likelihood Estimation (LTMLE) offers a more powerful alternative by integrating machine learning techniques to provide robust and efficient causal estimates. In this paper, we focus on LTMLE due to its ability to adaptively model dynamic treatment regimes and improve the precision of causal inferences in longitudinal studies.
+
+### Longitudinal targeted maximum likelihood estimation (LMTLE)
+
+LTMLE is s a statistical method used to estimate the effects of time-varying treatments or exposures in longitudinal data. It is particularly useful in settings where there are complex relationships between variables, such as time-dependent confounding, which can bias traditional estimation methods. LTMLE combines machine learning algorithms with targeted maximum likelihood estimation to provide robust and efficient estimates of causal effects.
+The method involves constructing a series of models to predict both the outcome and the treatment assignment, adjusting for confounders at each time point. By iteratively updating these models, LTMLE aims to reduce bias and improve the accuracy of causal effect estimates. 
+
+#### Steps for LMTLE from ChatGPT
+
+1. Data Preparation: Collect and organize longitudinal data, ensuring it includes repeated measures of outcomes, treatments, and potential confounders over time; Preprocess the data to handle missing values and ensure consistency across time points.
+2. Model Specification:Specify models for the outcome, treatment, and censoring processes; These models can be parametric or non-parametric, often incorporating machine learning algorithms to capture complex relationships.
+3. Initial Estimation: Use the specified models to obtain initial estimates of the outcome and treatment processes. This involves predicting the outcome given the treatment and confounders at each time point.
+4. Targeting Step: Apply the targeting step to update the initial estimates. This involves solving a set of estimating equations to adjust the initial estimates, reducing bias and improving efficiency; The targeting step uses clever covariates, which are derived from the treatment and censoring models, to refine the outcome model.
+5. Iterative Updates: Iteratively update the estimates by repeating the targeting step until convergence is achieved. This ensures that the estimates are as accurate and unbiased as possible.
+6. Variance Estimation: Estimate the variance of the causal effect estimates using techniques such as the influence curve, which provides a measure of the uncertainty associated with the estimates.
+7. Sensitivity Analysis: Conduct sensitivity analyses to assess the robustness of the results to different model specifications and assumptions about unmeasured confounding.
+
+### Counterfactual outcomes and Directed Acyclic Graphs (DAGs)
+
+Counterfactual outcomes refer to the hypothetical scenarios of what would have happened to an individual if they had received a different treatment or intervention than they actually did. In the context of longitudinal analysis, counterfactual outcomes are crucial for understanding the causal effects of time-varying treatments over time. By comparing the observed outcomes with these hypothetical scenarios, researchers can estimate the impact of different treatment strategies on patient trajectories. This approach helps in identifying the most effective interventions and informing the development of adaptive LMTPs.
+
+Directed Acyclic Graphs (DAGs) are graphical representations used to depict the causal relationships between variables in a system. They consist of nodes, representing variables, and directed edges, indicating causal influences, with the constraint that there are no cycles, meaning you cannot return to a node by following the directed edges. DAGs are valuable for visualizing assumptions about causal structures, identifying confounders, and guiding statistical analysis.
+
+In longitudinal studies, DAGs help model the complex temporal relationships between time-varying treatments, outcomes, and confounders. They clarify the causal pathways and dependencies that need to be considered when estimating causal effects over time. In LTMLE, DAGs are used to identify the appropriate adjustment sets for controlling confounders at each time point, ensuring that the causal effects are estimated accurately. By providing a clear framework for understanding the causal structure, DAGs guide the specification of models and the selection of variables in LTMLE, enhancing the robustness and validity of the causal inferences drawn from longitudinal data.
+
+### Visualizations and interpretations
+
+Clinicians often use various visualization tools to understand treatment trajectories and the effects of LMTPs on patient-specific interventions. These visualizations help in interpreting complex data and making informed decisions. Some common types include:
+
+[Put the ones of interest below in pill tabs?]
+
+1. Time-Series Plots: These plots display patient outcomes and treatment interventions over time, allowing clinicians to observe trends, patterns, and changes in response to treatments.
+**Supported by LMTLE**: By providing robust estimates of treatment effects over time, LTMLE can help generate time-series plots that display how patient outcomes evolve with different treatment strategies.
+
+2. Trajectory Plots: These plots show the progression of individual patients or groups of patients over time, highlighting how different treatment strategies impact health outcomes.
+**Supported by LMTLE**: LTMLE's ability to model dynamic treatment regimes allows for the visualization of individual or group trajectories, showing the impact of treatments on patient outcomes over time.
+
+3. Heatmaps: Heatmaps can be used to visualize the intensity or frequency of interventions and outcomes across different time points, providing a quick overview of treatment patterns.
+
+4. Survival Curves: These curves illustrate the probability of an event (such as recovery or relapse) over time, helping clinicians assess the effectiveness of different treatment policies.
+**Supported by LMTLE**: LTMLE can be used to estimate survival probabilities under different treatment scenarios, which can then be visualized using survival curves to assess the effectiveness of interventions.
+
+5. Decision Trees: Decision trees can be used to visualize the decision-making process involved in LMTPs, showing how different patient characteristics and treatment responses lead to specific interventions.
+
+6. Network Diagrams: These diagrams can represent the relationships between various treatments, outcomes, and patient characteristics, helping clinicians understand the broader context of treatment effects.
+
+## Notes for the worked example
+
+- Demonstrate how dynamic strategies can optimize health outcomes, using Ozempic treatment as an example. // Example: In diabetes management, clinicians adjust treatment based on evolving metrics like A1C levels, rather than sticking to a rigid protocol.
+
+- Overview of LTMLE and LMTP Methods: Include brief technical details on how each method models longitudinal data in R.
+
+4. Ozempic Case Study
+Context and Hypothesis:
+Ozempic, a medication for type 2 diabetes, may show different benefits based on patient-specific metrics such as A1C levels or BMI changes over time.
+Experimental Setup:
+Scenario 1: "Always on" Ozempic (all patients continuously receive treatment).
+Scenario 2: "Always off" Ozempic (treatment is never initiated).
+Dynamic Policy Example: Treatment is initiated when A1C > 7 and discontinued when normalized.
+Data Structure and Simulation:
+Explain the synthetic dataset with time-varying covariates, treatment indicators, and outcomes:
+L1,L2: Covariates (e.g., A1C, BMI).
+A1,A2: Treatment indicators (whether the patient received Ozempic).
+Y: Health outcome (e.g., reduction in A1C levels or long-term health metrics).
+
+5. Implementation and Results
+Using R for Analysis:
+Code snippets for generating synthetic data and applying LTMLE/LMTP.
+Highlight challenges (e.g., data formatting, handling missing data).
+Discuss the importance of ensuring DAG consistency in dynamic treatment models.
+Comparison of Static and Dynamic Policies:
+Present results: Compare health outcomes across "always on," "always off," and dynamic policies.
+Visualization:
+Include plots of predicted outcomes over time under different policies (pre- and post-treatment).
+Show counterfactual outcomes (e.g., what would have happened had the patient stopped treatment earlier).
+
+## Discussion
+
+### Clinical Implications
+
+Highlight how dynamic policies align with personalized medicine. Benefits of real-time data use to adjust treatment, particularly in chronic conditions like diabetes.
+
+### Challenges and Limitations 
+
+Data transformation issues (e.g., converting from long to wide format). Computational complexity of TMLE/LMTP in large datasets. The need for domain expertise to specify appropriate treatment rules and covariates.
+
+## Tools and Future Directions
+
+Dashboard for Dynamic Treatment Policy Evaluation: Describe the R-Shiny-based dashboard that simplifies the application of LTMLE/LMTP. Encourage researchers and clinicians to explore the open-source dashboard for their own datasets.
+
+## Conclusion
+
+Reiterate the importance of moving beyond static treatment comparisons.
+Emphasize the role of dynamic treatment policies in real-world decision-making.
+Encourage clinicians to adopt these advanced methods to optimize patient outcomes.
+
+## References and suggested reading
+
+Include references to the methodology (TMLE/LMTP) and clinical studies supporting Ozempic.
+Acknowledge the contributors and organizations (e.g., Parexel, ISPOR).
