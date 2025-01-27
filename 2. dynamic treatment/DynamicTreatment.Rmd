@@ -13,11 +13,26 @@ output:
 
 ___________________
 
-This is not fully structured, very work in progress. But drafting the parts here.
+# **Introduction**
 
-## All the concepts we want to suture
+## Proposed section goals
 
-### Dynamic vs. Static Treatment Policies
+   - Background on Dynamic Treatment Regimes (DTR) and Sequential Multiple Assignment Randomized Trials (SMART).
+   - Discussion on the use of dynamic treatment policies in healthcare and the role of structured observational data.
+
+## Proposed Text
+
+Dynamic Treatment Regimes (DTR) represent a paradigm shift in personalized medicine, offering a structured approach to tailoring medical interventions based on individual patient responses over time. Unlike traditional static treatment protocols, DTRs are designed to adapt to the evolving health status of patients, thereby optimizing therapeutic outcomes. Sequential Multiple Assignment Randomized Trials (SMART) are a key methodological framework for developing and evaluating DTRs. These trials allow for multiple stages of randomization, enabling researchers to assess the effectiveness of different treatment sequences and adapt strategies based on intermediate outcomes.
+
+The integration of dynamic treatment policies into healthcare systems is increasingly facilitated by advancements in data collection and analysis. With the proliferation of electronic health records (EHRs) and other forms of structured observational data, healthcare providers can now monitor patient progress in real-time and adjust treatment plans accordingly. This data-driven approach not only enhances the precision of medical interventions but also supports the development of more effective and efficient healthcare delivery models.
+
+Dynamic treatment policies are particularly valuable in managing chronic conditions, where patient responses to treatment can vary significantly over time. By continuously assessing patient data, healthcare providers can make informed decisions about when to escalate, de-escalate, or switch treatments, thereby minimizing the risks of overtreatment or undertreatment. This adaptability is crucial in achieving optimal patient outcomes and improving the overall quality of care.
+
+The role of structured observational data in dynamic treatment research cannot be overstated. Such data provides a rich source of information for understanding patient trajectories and identifying patterns that may inform treatment decisions. By leveraging advanced analytical techniques, researchers can extract meaningful insights from this data, guiding the development of more personalized and effective treatment strategies.
+
+In summary, the shift towards dynamic treatment policies marks a significant advancement in the field of personalized medicine. By embracing these adaptive strategies, healthcare providers can better meet the needs of individual patients, ultimately leading to improved health outcomes and more efficient use of healthcare resources.
+
+## Dynamic vs. Static Treatment Policies
 
 Treatment policies are structured guidelines or protocols used by healthcare providers to determine the appropriate strategy for managing certain indications. Based on evidence from clinical research, these policies provide a framework for decision-making, helping clinicians choose the best treatment options while considering factors like efficacy, safety, and cost-effectiveness.
 
@@ -25,107 +40,192 @@ Static treatment policies are fixed medical protocols that prescribe a uniform a
 
 Following a the rise of evidence-based medicine advancements and increased access to electronic health records (EHRs) that support continuous monitoring of patient progress, the 21st century has seen a shift towards more personalized medical care, including dynamic treatment policies. Dynamic treatment policies are flexible medical protocols that adapt to the changing conditions and responses of individual patients over time. Unlike static policies, they allow healthcare providers to modify treatment plans based on real-time data, patient feedback, and evolving clinical circumstances. By incorporating ongoing assessments and adjustments, dynamic treatment policies can enhance the effectiveness and efficiency of medical care, reducing risks of overtreatment or undertreatment.
 
-### Longitudinal modifiable treatment policies
+## Proposed Text
+
+The distinction between dynamic and static treatment policies is fundamental to understanding the evolution of medical decision-making. Static treatment policies, characterized by their fixed nature, have long been the cornerstone of clinical practice. These policies prescribe a uniform approach to treatment, often based on population-level evidence, without accounting for individual patient variability. While they offer simplicity and consistency, static policies can be limited in their ability to address the unique needs of each patient.
+
+In contrast, dynamic treatment policies offer a more flexible and responsive approach to patient care. By incorporating real-time data and patient feedback, these policies allow healthcare providers to tailor treatment plans to the specific circumstances of each patient. This adaptability is particularly important in managing conditions where patient responses to treatment can change over time, such as in chronic diseases or complex medical cases.
+
+The transition from static to dynamic treatment policies has been driven by several factors, including advancements in evidence-based medicine and the increasing availability of electronic health records (EHRs). These developments have enabled healthcare providers to continuously monitor patient progress and make data-informed decisions about treatment adjustments. As a result, dynamic treatment policies have the potential to enhance the effectiveness and efficiency of medical care, reducing the risks of overtreatment or undertreatment.
+
+Dynamic treatment policies also align with the broader trend towards personalized medicine, which seeks to tailor medical interventions to the individual characteristics of each patient. By leveraging data-driven insights, healthcare providers can develop more precise and targeted treatment strategies, ultimately improving patient outcomes and satisfaction.
+
+In conclusion, the shift towards dynamic treatment policies represents a significant advancement in the field of healthcare. By embracing these adaptive strategies, healthcare providers can better meet the needs of individual patients, leading to more effective and efficient care delivery.
+
+## Longitudinal modifiable treatment policies
 
 Longitudinal modifiable treatment policies (LMTPs) are a type of dynamic treatment policy providing adaptive healthcare strategies that evolve over time, based on continuous monitoring and assessment of a patient's health status. These policies leverage data-driven insights from regular health evaluations and patient feedback to adjust treatment plans. They are particularly useful in managing chronic conditions, allowing for proactive interventions and adjustments in response to changes in the patient's condition or emerging medical evidence. 
 
-LMTPs can be developed using a variety of [causal inference methods](https://www.biostatistics.ca/crash-course-on-confounding-bias-and-deconfounding-remedies-using-r/ "For a primer in causal inference methods, see our 'Crash course in confounding, bias, and deconfounding remedies using R.'") adapted to address the complexities of longitudinal data. Traditional approaches such as longitudinal propensity score methods, marginal structural models, and instrumental variable analysis have been instrumental tools to estimate causal effects by accounting for confounding variables over time. However, these methods often face limitations in handling complex, high-dimensional data and time-varying confounders. Longitudinal Targeted Maximum Likelihood Estimation (LTMLE) offers a more powerful alternative by integrating machine learning techniques to provide robust and efficient causal estimates. In this paper, we focus on LTMLE due to its ability to adaptively model dynamic treatment regimes and improve the precision of causal inferences in longitudinal studies.
+LMTPs can be developed using a variety of causal inference models adapted to address the complexities of longitudinal data. Traditional approaches such as longitudinal propensity score methods, marginal structural models, and instrumental variable analysis have been instrumental tools to estimate causal effects by accounting for confounding variables over time. However, these methods often face limitations in handling complex, high-dimensional data and time-varying confounders. Longitudinal Targeted Maximum Likelihood Estimation (LTMLE) offers a more powerful alternative by integrating machine learning techniques to provide robust and efficient causal estimates. In this paper, we focus on LTMLE due to its ability to adaptively model dynamic treatment regimes and improve the precision of causal inferences in longitudinal studies.
 
-### Longitudinal targeted maximum likelihood estimation (LMTLE)
+## Proposed Text
 
-LTMLE is s a statistical method used to estimate the effects of time-varying treatments or exposures in longitudinal data. It is particularly useful in settings where there are complex relationships between variables, such as time-dependent confounding, which can bias traditional estimation methods. LTMLE combines machine learning algorithms with targeted maximum likelihood estimation to provide robust and efficient estimates of causal effects.
-The method involves constructing a series of models to predict both the outcome and the treatment assignment, adjusting for confounders at each time point. By iteratively updating these models, LTMLE aims to reduce bias and improve the accuracy of causal effect estimates. 
+Longitudinal modifiable treatment policies (LMTPs) are a sophisticated approach to dynamic treatment that emphasizes continuous adaptation based on patient-specific data. These policies are particularly well-suited for managing chronic conditions, where patient health status can fluctuate over time. By leveraging regular health evaluations and patient feedback, LMTPs enable healthcare providers to make proactive adjustments to treatment plans, ensuring that interventions remain aligned with the patient's evolving needs.
 
-#### Steps for LMTLE from ChatGPT
+The development of LMTPs is supported by a range of causal inference models that are designed to handle the complexities of longitudinal data. Traditional methods, such as longitudinal propensity score methods and marginal structural models, have been instrumental in estimating causal effects by accounting for confounding variables over time. However, these approaches often face challenges in dealing with high-dimensional data and time-varying confounders.
 
-1. Data Preparation: Collect and organize longitudinal data, ensuring it includes repeated measures of outcomes, treatments, and potential confounders over time; Preprocess the data to handle missing values and ensure consistency across time points.
-2. Model Specification:Specify models for the outcome, treatment, and censoring processes; These models can be parametric or non-parametric, often incorporating machine learning algorithms to capture complex relationships.
-3. Initial Estimation: Use the specified models to obtain initial estimates of the outcome and treatment processes. This involves predicting the outcome given the treatment and confounders at each time point.
-4. Targeting Step: Apply the targeting step to update the initial estimates. This involves solving a set of estimating equations to adjust the initial estimates, reducing bias and improving efficiency; The targeting step uses clever covariates, which are derived from the treatment and censoring models, to refine the outcome model.
-5. Iterative Updates: Iteratively update the estimates by repeating the targeting step until convergence is achieved. This ensures that the estimates are as accurate and unbiased as possible.
-6. Variance Estimation: Estimate the variance of the causal effect estimates using techniques such as the influence curve, which provides a measure of the uncertainty associated with the estimates.
-7. Sensitivity Analysis: Conduct sensitivity analyses to assess the robustness of the results to different model specifications and assumptions about unmeasured confounding.
+Longitudinal Targeted Maximum Likelihood Estimation (LTMLE) offers a more powerful alternative by integrating machine learning techniques to provide robust and efficient causal estimates. LTMLE is particularly effective in modeling dynamic treatment regimes, as it can adaptively account for the complex relationships between variables over time. By improving the precision of causal inferences, LTMLE enhances the ability of researchers to develop and evaluate LMTPs.
 
-### Counterfactual outcomes and Directed Acyclic Graphs (DAGs)
+In practice, LMTPs require a comprehensive understanding of the patient's health trajectory and the factors that influence treatment outcomes. This involves collecting and analyzing longitudinal data, identifying relevant confounders, and specifying appropriate models for causal inference. By doing so, healthcare providers can develop treatment strategies that are both evidence-based and tailored to the individual needs of each patient.
 
-Counterfactual outcomes refer to the hypothetical scenarios of what would have happened to an individual if they had received a different treatment or intervention than they actually did. In the context of longitudinal analysis, counterfactual outcomes are crucial for understanding the causal effects of time-varying treatments over time. By comparing the observed outcomes with these hypothetical scenarios, researchers can estimate the impact of different treatment strategies on patient trajectories. This approach helps in identifying the most effective interventions and informing the development of adaptive LMTPs.
+Overall, LMTPs represent a significant advancement in the field of personalized medicine. By embracing these adaptive strategies, healthcare providers can improve the quality of care for patients with chronic conditions, ultimately leading to better health outcomes and more efficient use of healthcare resources.
 
-Directed Acyclic Graphs (DAGs) are graphical representations used to depict the causal relationships between variables in a system. They consist of nodes, representing variables, and directed edges, indicating causal influences, with the constraint that there are no cycles, meaning you cannot return to a node by following the directed edges. DAGs are valuable for visualizing assumptions about causal structures, identifying confounders, and guiding statistical analysis.
+# **Observational Data in Dynamic Treatment**
 
-In longitudinal studies, DAGs help model the complex temporal relationships between time-varying treatments, outcomes, and confounders. They clarify the causal pathways and dependencies that need to be considered when estimating causal effects over time. In LTMLE, DAGs are used to identify the appropriate adjustment sets for controlling confounders at each time point, ensuring that the causal effects are estimated accurately. By providing a clear framework for understanding the causal structure, DAGs guide the specification of models and the selection of variables in LTMLE, enhancing the robustness and validity of the causal inferences drawn from longitudinal data.
+## Proposed section goals
 
-### Visualizations and interpretations
+   - Limitations of time-based data in observational studies.
+   - Overview of potential data sources for dynamic treatment research.
+   - Criteria for determining feasibility in time-based research.
 
-Clinicians often use various visualization tools to understand treatment trajectories and the effects of LMTPs on patient-specific interventions. These visualizations help in interpreting complex data and making informed decisions. Some common types include:
+## Proposed Text
 
-[Put the ones of interest below in pill tabs?]
+Observational data plays a crucial role in dynamic treatment research, providing valuable insights into patient trajectories and treatment outcomes. However, the use of time-based data in observational studies presents several challenges that must be addressed to ensure the validity and reliability of research findings.
 
-1. Time-Series Plots: These plots display patient outcomes and treatment interventions over time, allowing clinicians to observe trends, patterns, and changes in response to treatments.
-**Supported by LMTLE**: By providing robust estimates of treatment effects over time, LTMLE can help generate time-series plots that display how patient outcomes evolve with different treatment strategies.
+One of the primary limitations of time-based data is the potential for confounding, where unmeasured variables may influence both the treatment and the outcome. This can lead to biased estimates of causal effects, making it difficult to draw accurate conclusions about the effectiveness of different treatment strategies. To mitigate this issue, researchers must carefully consider the design and analysis of observational studies, employing advanced statistical techniques to account for confounding variables.
 
-2. Trajectory Plots: These plots show the progression of individual patients or groups of patients over time, highlighting how different treatment strategies impact health outcomes.
-**Supported by LMTLE**: LTMLE's ability to model dynamic treatment regimes allows for the visualization of individual or group trajectories, showing the impact of treatments on patient outcomes over time.
+Despite these challenges, observational data offers a rich source of information for dynamic treatment research. Electronic health records (EHRs), patient registries, and other forms of structured data provide detailed longitudinal information on patient health status, treatment history, and outcomes. By leveraging these data sources, researchers can gain a deeper understanding of the factors that influence treatment effectiveness and develop more personalized and adaptive treatment strategies.
 
-3. Heatmaps: Heatmaps can be used to visualize the intensity or frequency of interventions and outcomes across different time points, providing a quick overview of treatment patterns.
+When determining the feasibility of time-based research, several criteria must be considered. These include the availability and quality of data, the ability to accurately measure relevant variables, and the potential for confounding. Additionally, researchers must assess the generalizability of their findings, considering whether the study population is representative of the broader patient population.
 
-4. Survival Curves: These curves illustrate the probability of an event (such as recovery or relapse) over time, helping clinicians assess the effectiveness of different treatment policies.
-**Supported by LMTLE**: LTMLE can be used to estimate survival probabilities under different treatment scenarios, which can then be visualized using survival curves to assess the effectiveness of interventions.
+In conclusion, while time-based data in observational studies presents certain challenges, it also offers significant opportunities for advancing dynamic treatment research. By carefully addressing the limitations and leveraging the strengths of observational data, researchers can develop more effective and personalized treatment strategies, ultimately improving patient outcomes and the quality of care.
 
-5. Decision Trees: Decision trees can be used to visualize the decision-making process involved in LMTPs, showing how different patient characteristics and treatment responses lead to specific interventions.
+# **Foundations of Causal Inference**
 
-6. Network Diagrams: These diagrams can represent the relationships between various treatments, outcomes, and patient characteristics, helping clinicians understand the broader context of treatment effects.
+## Proposed section goals
+   - Introduction to causal inference and the construction of Directed Acyclic Graphs (DAGs).
+   - Reference to previous team publications for foundational methods.
+   - **Existing Text:**
+     - "Counterfactual outcomes refer to the hypothetical scenarios of what would have happened to an individual if they had received a different treatment or intervention than they actually did. In the context of longitudinal analysis, counterfactual outcomes are crucial for understanding the causal effects of time-varying treatments over time."
 
-## Notes for the worked example
+## Proposed Text
 
-- Demonstrate how dynamic strategies can optimize health outcomes, using Ozempic treatment as an example. // Example: In diabetes management, clinicians adjust treatment based on evolving metrics like A1C levels, rather than sticking to a rigid protocol.
+Causal inference is a fundamental aspect of dynamic treatment research, providing the framework for understanding the relationships between treatments, outcomes, and confounders. At its core, causal inference seeks to estimate the effect of a treatment or intervention on an outcome, accounting for the influence of other variables that may affect this relationship.
 
-- Overview of LTMLE and LMTP Methods: Include brief technical details on how each method models longitudinal data in R.
+Directed Acyclic Graphs (DAGs) are a powerful tool for visualizing and analyzing causal relationships. These graphical representations consist of nodes, representing variables, and directed edges, indicating causal influences. The acyclic nature of DAGs ensures that there are no feedback loops, allowing researchers to clearly delineate the causal pathways and dependencies within a system.
 
-4. Ozempic Case Study
-Context and Hypothesis:
-Ozempic, a medication for type 2 diabetes, may show different benefits based on patient-specific metrics such as A1C levels or BMI changes over time.
-Experimental Setup:
-Scenario 1: "Always on" Ozempic (all patients continuously receive treatment).
-Scenario 2: "Always off" Ozempic (treatment is never initiated).
-Dynamic Policy Example: Treatment is initiated when A1C > 7 and discontinued when normalized.
-Data Structure and Simulation:
-Explain the synthetic dataset with time-varying covariates, treatment indicators, and outcomes:
-L1,L2: Covariates (e.g., A1C, BMI).
-A1,A2: Treatment indicators (whether the patient received Ozempic).
-Y: Health outcome (e.g., reduction in A1C levels or long-term health metrics).
+In the context of longitudinal studies, DAGs are particularly valuable for modeling the complex temporal relationships between time-varying treatments, outcomes, and confounders. By providing a clear framework for understanding these relationships, DAGs guide the specification of models and the selection of variables for causal inference. This ensures that the causal effects are estimated accurately, enhancing the robustness and validity of the research findings.
 
-5. Implementation and Results
-Using R for Analysis:
-Code snippets for generating synthetic data and applying LTMLE/LMTP.
-Highlight challenges (e.g., data formatting, handling missing data).
-Discuss the importance of ensuring DAG consistency in dynamic treatment models.
-Comparison of Static and Dynamic Policies:
-Present results: Compare health outcomes across "always on," "always off," and dynamic policies.
-Visualization:
-Include plots of predicted outcomes over time under different policies (pre- and post-treatment).
-Show counterfactual outcomes (e.g., what would have happened had the patient stopped treatment earlier).
+Counterfactual outcomes are another key concept in causal inference, representing the hypothetical scenarios of what would have happened to an individual if they had received a different treatment or intervention. By comparing the observed outcomes with these counterfactual scenarios, researchers can estimate the impact of different treatment strategies on patient trajectories. This approach is crucial for identifying the most effective interventions and informing the development of adaptive treatment policies.
 
-## Discussion
+In summary, causal inference provides the foundation for dynamic treatment research, enabling researchers to estimate the effects of time-varying treatments and develop more personalized and effective treatment strategies. By leveraging tools such as DAGs and counterfactual outcomes, researchers can gain a deeper understanding of the causal relationships within a system, ultimately improving the quality of care and patient outcomes.
 
-### Clinical Implications
+# **Traditional Methods for Analyzing Time-Based Data**
 
-Highlight how dynamic policies align with personalized medicine. Benefits of real-time data use to adjust treatment, particularly in chronic conditions like diabetes.
+## Proposed section goals
+   - Propensity score weighting adapted for DTR.
+   - Q functions and Q learning.
+   - Other traditional methods for time-based data analysis.
+   - **Existing Text:**
+     - "Traditional approaches such as longitudinal propensity score methods, marginal structural models, and instrumental variable analysis have been instrumental tools to estimate causal effects by accounting for confounding variables over time."
 
-### Challenges and Limitations 
+## Proposed Text
 
-Data transformation issues (e.g., converting from long to wide format). Computational complexity of TMLE/LMTP in large datasets. The need for domain expertise to specify appropriate treatment rules and covariates.
+Traditional methods for analyzing time-based data have been instrumental in advancing our understanding of dynamic treatment regimes. These methods provide the foundation for estimating causal effects in the presence of time-varying confounders, enabling researchers to draw meaningful conclusions about the effectiveness of different treatment strategies.
 
-## Tools and Future Directions
+Propensity score weighting is a widely used technique for addressing confounding in observational studies. By estimating the probability of treatment assignment based on observed covariates, propensity scores allow researchers to balance the treatment groups and reduce bias in causal effect estimates. In the context of dynamic treatment regimes, propensity score weighting can be adapted to account for the sequential nature of treatment decisions, providing a more accurate assessment of treatment effects over time.
 
-Dashboard for Dynamic Treatment Policy Evaluation: Describe the R-Shiny-based dashboard that simplifies the application of LTMLE/LMTP. Encourage researchers and clinicians to explore the open-source dashboard for their own datasets.
+Q functions and Q learning are another set of traditional methods used in dynamic treatment research. Q functions represent the expected outcome given a particular treatment decision, while Q learning is an iterative process for estimating these functions. By modeling the relationship between treatment decisions and outcomes, Q learning provides a framework for optimizing treatment strategies and identifying the most effective interventions.
 
-## Conclusion
+Other traditional methods for time-based data analysis include marginal structural models and instrumental variable analysis. Marginal structural models use inverse probability weighting to account for time-varying confounders, while instrumental variable analysis leverages external variables to estimate causal effects in the presence of unmeasured confounding. These methods have been instrumental in advancing our understanding of dynamic treatment regimes, providing valuable insights into the factors that influence treatment effectiveness.
+
+In conclusion, traditional methods for analyzing time-based data provide a robust framework for estimating causal effects in dynamic treatment research. By leveraging these techniques, researchers can develop more personalized and effective treatment strategies, ultimately improving patient outcomes and the quality of care.
+
+# **Advanced and Novel Causal Methods**
+
+## Proposed section goals
+   - Exploration of advanced causal methods for time-based data.
+   - Discussion on the integration of these methods into dynamic treatment research.
+   - **Existing Text:**
+     - "Longitudinal Targeted Maximum Likelihood Estimation (LTMLE) offers a more powerful alternative by integrating machine learning techniques to provide robust and efficient causal estimates."
+
+## Proposed Text
+
+The field of dynamic treatment research is rapidly evolving, with advanced and novel causal methods offering new opportunities for understanding and optimizing treatment strategies. These methods build on traditional approaches, incorporating machine learning techniques and other innovations to provide more robust and efficient causal estimates.
+
+Longitudinal Targeted Maximum Likelihood Estimation (LTMLE) is a leading example of an advanced causal method that has gained prominence in recent years. By integrating machine learning algorithms with targeted maximum likelihood estimation, LTMLE provides a powerful framework for estimating the effects of time-varying treatments in longitudinal data. This method is particularly effective in settings with complex relationships between variables, such as time-dependent confounding, which can bias traditional estimation methods.
+
+The integration of advanced causal methods into dynamic treatment research offers several advantages. By leveraging machine learning techniques, researchers can capture complex relationships between variables and improve the precision of causal effect estimates. This enables the development of more personalized and adaptive treatment strategies, ultimately leading to better patient outcomes and more efficient use of healthcare resources.
+
+In addition to LTMLE, other advanced causal methods are being explored for their potential to enhance dynamic treatment research. These include Bayesian approaches, which provide a flexible framework for incorporating prior knowledge and uncertainty into causal inference, and reinforcement learning, which offers a data-driven approach to optimizing treatment strategies over time.
+
+In summary, advanced and novel causal methods represent a significant advancement in the field of dynamic treatment research. By embracing these innovative techniques, researchers can gain a deeper understanding of the factors that influence treatment effectiveness and develop more personalized and effective treatment strategies, ultimately improving the quality of care and patient outcomes.
+
+# **Data Handling and Analysis Techniques**
+
+## Proposed section goals
+   - Overview of data handling techniques in dynamic treatment research.
+   - Discussion on multiple imputation and test-wise deletion as per Witte 2022.
+   - Considerations for data quality and integrity in longitudinal studies.
+
+## Proposed Text
+
+Multiple imputation and test-wise deletion are critical techniques for handling missing data in dynamic treatment research, as highlighted by Witte 2022. Multiple imputation involves creating several complete datasets by filling in missing values with plausible data points based on observed data patterns. This approach allows for more robust statistical analyses by accounting for the uncertainty associated with missing data.
+
+Test-wise deletion, on the other hand, involves excluding cases with missing data for specific tests or analyses. While this method can simplify data handling, it may lead to biased results if the missing data is not random. Therefore, careful consideration of the underlying data patterns and potential biases is essential when choosing between these techniques.
+
+Incorporating these data handling methods into dynamic treatment research can enhance the quality and reliability of causal inferences. By addressing the challenges associated with missing data, researchers can ensure that their findings are both valid and generalizable, ultimately improving the effectiveness of dynamic treatment strategies.
+
+# **Comparison of Methods**
+
+## Proposed section goals
+   - Pros and cons of traditional versus advanced causal methods.
+   - Case studies or examples illustrating the application of different methods.
+
+## Proposed Text
+
+The comparison of traditional and advanced causal methods is a critical aspect of dynamic treatment research, providing insights into the strengths and limitations of different approaches. By understanding the pros and cons of each method, researchers can make informed decisions about the most appropriate techniques for their specific research questions and data contexts.
+
+Traditional causal methods, such as propensity score weighting and marginal structural models, offer several advantages. These methods are well-established and widely used, providing a robust framework for estimating causal effects in the presence of confounding. They are also relatively straightforward to implement, making them accessible to researchers with varying levels of expertise in causal inference.
+
+However, traditional methods also have limitations. They may struggle to handle complex, high-dimensional data and time-varying confounders, which can lead to biased estimates of causal effects. Additionally, these methods often rely on strong assumptions about the relationships between variables, which may not hold in all settings.
+
+Advanced causal methods, such as LTMLE and reinforcement learning, offer a more flexible and powerful alternative. By incorporating machine learning techniques, these methods can capture complex relationships between variables and improve the precision of causal effect estimates. This enables the development of more personalized and adaptive treatment strategies, ultimately leading to better patient outcomes.
+
+Despite their advantages, advanced methods also have challenges. They can be computationally intensive and require a high level of expertise to implement correctly. Additionally, the integration of machine learning techniques introduces new considerations, such as the risk of overfitting and the need for careful model validation.
+
+Case studies and examples can provide valuable insights into the application of different causal methods in dynamic treatment research. By examining real-world scenarios, researchers can gain a deeper understanding of the strengths and limitations of each approach, ultimately guiding the selection of the most appropriate methods for their specific research questions.
+
+In conclusion, the comparison of traditional and advanced causal methods is a critical aspect of dynamic treatment research. By understanding the pros and cons of each approach, researchers can make informed decisions about the most appropriate techniques for their specific research questions and data contexts, ultimately improving the quality of care and patient outcomes.
+
+# **Future Directions in Longitudinal Research**
+
+## Proposed section goals
+   - The future of advanced causal methods in longitudinal studies.
+   - Introduction to a Shiny app that supports dynamic treatment research.
+   - **Existing Text:**
+     - "Dashboard for Dynamic Treatment Policy Evaluation: Describe the R-Shiny-based dashboard that simplifies the application of LTMLE/LMTP. Encourage researchers and clinicians to explore the open-source dashboard for their own datasets."
+
+## Proposed Text
+
+The future of longitudinal research is poised for significant advancements, driven by the development and integration of advanced causal methods. These methods offer new opportunities for understanding and optimizing treatment strategies, ultimately leading to more personalized and effective healthcare delivery.
+
+One of the key areas of focus in future longitudinal research is the continued development and refinement of advanced causal methods, such as LTMLE and reinforcement learning. By leveraging machine learning techniques and other innovations, researchers can gain a deeper understanding of the complex relationships between variables and improve the precision of causal effect estimates. This will enable the development of more personalized and adaptive treatment strategies, ultimately leading to better patient outcomes and more efficient use of healthcare resources.
+
+In addition to methodological advancements, the future of longitudinal research will also be shaped by the development of new tools and technologies that support dynamic treatment research. One such tool is the R-Shiny-based dashboard for Dynamic Treatment Policy Evaluation, which simplifies the application of LTMLE/LMTP and encourages researchers and clinicians to explore the open-source dashboard for their own datasets. This dashboard provides a user-friendly interface for implementing advanced causal methods, making it accessible to a wider audience and facilitating the integration of these techniques into clinical practice.
+
+The future of longitudinal research also holds promise for the development of new data sources and technologies that enhance the collection and analysis of longitudinal data. Advances in wearable technology, remote monitoring, and other forms of digital health data collection will provide researchers with more comprehensive and detailed information on patient health status and treatment outcomes. This will enable the development of more personalized and adaptive treatment strategies, ultimately leading to better patient outcomes and more efficient use of healthcare resources.
+
+In conclusion, the future of longitudinal research is bright, with significant advancements in advanced causal methods and new tools and technologies that support dynamic treatment research. By embracing these innovations, researchers can gain a deeper understanding of the factors that influence treatment effectiveness and develop more personalized and effective treatment strategies, ultimately improving the quality of care and patient outcomes.
+
+# **Conclusion**
 
 Reiterate the importance of moving beyond static treatment comparisons.
 Emphasize the role of dynamic treatment policies in real-world decision-making.
 Encourage clinicians to adopt these advanced methods to optimize patient outcomes.
 
-## References and suggested reading
+## Proposed Text
 
-Include references to the methodology (TMLE/LMTP) and clinical studies supporting Ozempic.
-Acknowledge the contributors and organizations (e.g., Parexel, ISPOR).
+The conclusion of this article underscores the critical importance of moving beyond static treatment comparisons and embracing dynamic treatment policies in healthcare. As the field of personalized medicine continues to evolve, dynamic treatment strategies offer a more flexible and responsive approach to patient care, enabling healthcare providers to tailor interventions based on individual patient responses and real-time data.
+
+Dynamic treatment policies play a vital role in real-world decision-making, providing a framework for optimizing treatment strategies and improving patient outcomes. By continuously assessing patient data and making informed decisions about treatment adjustments, healthcare providers can minimize the risks of overtreatment or undertreatment and enhance the overall quality of care.
+
+The adoption of advanced causal methods, such as LTMLE and reinforcement learning, is essential for realizing the full potential of dynamic treatment policies. These methods provide a powerful framework for estimating causal effects and developing personalized treatment strategies, ultimately leading to better patient outcomes and more efficient use of healthcare resources.
+
+Clinicians are encouraged to embrace these advanced methods and integrate them into their practice, leveraging the insights gained from dynamic treatment research to optimize patient care. By doing so, they can contribute to the ongoing advancement of personalized medicine and improve the quality of care for their patients.
+
+In summary, the shift towards dynamic treatment policies represents a significant advancement in the field of healthcare. By embracing these adaptive strategies and leveraging advanced causal methods, healthcare providers can better meet the needs of individual patients, ultimately leading to improved health outcomes and more efficient use of healthcare resources.
+
+# **Reading List**
+   - [Dynamic Treatment Regimes](https://pmc.ncbi.nlm.nih.gov/articles/PMC4231831/)
+   - [Learning Optimal Dynamic Treatment Regimes](https://pubmed.ncbi.nlm.nih.gov/38879744/)
