@@ -15,42 +15,56 @@ ___________________
 
 # **Introduction**
 
-## Proposed section goals
+## Static vs. Dynamic Treatment Policies
+
+**Treatment policies** are structured guidelines or protocols used by healthcare providers to determine appropriate strategies for managing specific conditions. Grounded in clinical research, these policies provide a framework for decision-making, guiding clinicians in selecting optimal treatment options while balancing factors such as efficacy, safety, and cost-effectiveness.
+
+**Static treatment policies** prescribe fixed medical protocols that apply a uniform approach to patient care, often following an "always treat" or "never treat" rule. These policies do not account for individual patient variability or changing health conditions over time. While static policies can simplify clinical decision-making and promote uniformity in care, their rigidity can lead to overtreatment or undertreatment when patient needs evolve beyond the initial treatment framework.
+
+Advancements in evidence-based medicine, coupled with the increased availability of electronic health records (EHRs) and real-time patient monitoring, have driven a shift toward more personalized medical care. This shift has led to the emergence of **dynamic treatment policies**, adaptive medical protocols that continuously adjust treatment decisions based on a patient’s evolving condition and response to therapy. Unlike static policies, dynamic treatment policies integrate real-time data, patient feedback, and clinical reassessments to refine treatment strategies over time. By incorporating ongoing evaluations, these policies enhance both the effectiveness and efficiency of care, reducing the risks associated with static approaches.
+
+## The Need for Causal Methods with Longitudinal Data
+
+Dynamic treatment policies embody a healthcare model that actively "listens" to patients, continuously monitoring a broad range of factors to guide treatment decisions. In contrast, static treatment policies apply predefined rules based on a one-time assessment, assigning patients to "always treat"/"never treat" rules based on demographics, comorbidities, or other identifiers.
+
+Traditional research methodologies, including randomized controlled trials (RCTs), have historically followed principles aligned with static treatment policies. In these models, patients are assessed at a single point in time, assigned to a treatment regimen, and monitored for outcomes within a fixed framework. Similarly, many real-world evidence (RWE) study designs have been developed to assess static treatments (for example, evaluating the long-term adverse effects of a treatment administered once, without considering subsequent treatment patterns).
+
+As healthcare increasingly embraces dynamic treatment strategies, there is a pressing need to evolve research methodologies that can accurately assess their outcomes. Traditional study designs often fall short in capturing the complexities of dynamic treatment adjustments. For instance, while existing research methods can track adverse events in response to a static treatment protocol, they may not effectively evaluate how continuous adjustments in treatment impact patient outcomes over time.
+
+Advances in longitudinal study designs seek to address this gap by developing advanced methodologies capable of studying dynamic treatment policies within real-world settings. In this paper, we will explore the evolution of reactive treatment studies in clinical research, followed by an in-depth discussion of how dynamic treatment policies can be effectively analyzed using RWE methodologies. We will examine best practices for feasibility assessment, data collection, and study design, as well as explore advanced causal inference frameworks, such as Longitudinal Targeted Maximum Likelihood Estimation (LTMLE), that leverage machine learning to uncover causal relationships in dynamic treatment research.
+
+This paper aims to provide both conceptual foundations and practical guidance for researchers interested in studying dynamic treatment policies. For those new to causal inference, we recommend first reviewing our Crash Course in Causal Methods, which introduces core causal inference concepts essential for understanding the methodologies discussed in this paper.
+
+## Worked Example: Permissive Anemia
+
+To illustrate these concepts, we will present a case study on the treatment of permissive anemia using blood transfusion within a dynamic treatment framework. Using simulated data, we will implement causal inference techniques in R to compare different methodological approaches and assess their effectiveness in recovering the true treatment effect.
+
+[TO ADD: Overview of Permissive Anemia if this is the example we end up using.]
+
+
+
+
+
+
+   - This is where SMART trials were born. (We think of SMART as responsive or reactive; run out of runway anticipating these dynamic treatments)
+   - "ex-ante": hard to anticipate all of the meaningful patterns
+   - We want something that is reactive that can anticipate all the patterns.
+   - Want data who we have longitudinal records, where treatment dynamics have been recorded, with variables you think it reacts To
+   
+   - Worked example: intubation / outcome: COVID induced death; decision: when to intubate (not just "if"), what is the strategy?
+   - Blood transfusion: Permissive anemia; blood tranf. is hard on your body but you watch your body and develop an optimal strategy
+   - Listen to hemoglobin (and what else?) - age ? - DAG is essential 
+
+   - Sidebar: DAG is used differently in longitudinal studies. (A is acyclic and you're literally inviting a cycle.) (We don't believe cycles exist because a key feature is the passing of time. Our whole body is feedback loops but they become DAGS with the passage of time (only listens to the past)). 
+   - Non parametric structural equations (don't have to articulate the form in the same way in these)\
+   - But in a problem with this listening nature, that doesn't lend itself to a static treatment, you need to model and know what the triggers are. When and how much? 
+
+   - How we articulate the problem drives the analytics: If we only pull the patients with a blood transfusion, we condition on that outcome. But if we pull on patients permissive anemia we generalize further. 
+   - Who do we condition on? 
+   - Sidebar: What does it look like if we only condition on an outcome.  
 
    - Background on Dynamic Treatment Regimes (DTR) and Sequential Multiple Assignment Randomized Trials (SMART).
    - Discussion on the use of dynamic treatment policies in healthcare and the role of structured observational data.
-
-## Proposed Text
-
-Dynamic Treatment Regimes (DTR) represent a paradigm shift in personalized medicine, offering a structured approach to tailoring medical interventions based on individual patient responses over time. Unlike traditional static treatment protocols, DTRs are designed to adapt to the evolving health status of patients, thereby optimizing therapeutic outcomes. Sequential Multiple Assignment Randomized Trials (SMART) are a key methodological framework for developing and evaluating DTRs. These trials allow for multiple stages of randomization, enabling researchers to assess the effectiveness of different treatment sequences and adapt strategies based on intermediate outcomes.
-
-The integration of dynamic treatment policies into healthcare systems is increasingly facilitated by advancements in data collection and analysis. With the proliferation of electronic health records (EHRs) and other forms of structured observational data, healthcare providers can now monitor patient progress in real-time and adjust treatment plans accordingly. This data-driven approach not only enhances the precision of medical interventions but also supports the development of more effective and efficient healthcare delivery models.
-
-Dynamic treatment policies are particularly valuable in managing chronic conditions, where patient responses to treatment can vary significantly over time. By continuously assessing patient data, healthcare providers can make informed decisions about when to escalate, de-escalate, or switch treatments, thereby minimizing the risks of overtreatment or undertreatment. This adaptability is crucial in achieving optimal patient outcomes and improving the overall quality of care.
-
-The role of structured observational data in dynamic treatment research cannot be overstated. Such data provides a rich source of information for understanding patient trajectories and identifying patterns that may inform treatment decisions. By leveraging advanced analytical techniques, researchers can extract meaningful insights from this data, guiding the development of more personalized and effective treatment strategies.
-
-In summary, the shift towards dynamic treatment policies marks a significant advancement in the field of personalized medicine. By embracing these adaptive strategies, healthcare providers can better meet the needs of individual patients, ultimately leading to improved health outcomes and more efficient use of healthcare resources.
-
-## Dynamic vs. Static Treatment Policies
-
-Treatment policies are structured guidelines or protocols used by healthcare providers to determine the appropriate strategy for managing certain indications. Based on evidence from clinical research, these policies provide a framework for decision-making, helping clinicians choose the best treatment options while considering factors like efficacy, safety, and cost-effectiveness.
-
-Static treatment policies are fixed medical protocols that prescribe a uniform approach to treating specific conditions, without accounting for individual patient variability. These policies often dictate a consistent treatment method, such as "always treat" or "never treat," regardless of changes in a patient's condition or response to therapy. While they can simplify clinical decision-making and ensure uniformity in care, a lack of responsiveness often leads to either overtreatment or undertreatment. 
-
-Following a the rise of evidence-based medicine advancements and increased access to electronic health records (EHRs) that support continuous monitoring of patient progress, the 21st century has seen a shift towards more personalized medical care, including dynamic treatment policies. Dynamic treatment policies are flexible medical protocols that adapt to the changing conditions and responses of individual patients over time. Unlike static policies, they allow healthcare providers to modify treatment plans based on real-time data, patient feedback, and evolving clinical circumstances. By incorporating ongoing assessments and adjustments, dynamic treatment policies can enhance the effectiveness and efficiency of medical care, reducing risks of overtreatment or undertreatment.
-
-## Proposed Text
-
-The distinction between dynamic and static treatment policies is fundamental to understanding the evolution of medical decision-making. Static treatment policies, characterized by their fixed nature, have long been the cornerstone of clinical practice. These policies prescribe a uniform approach to treatment, often based on population-level evidence, without accounting for individual patient variability. While they offer simplicity and consistency, static policies can be limited in their ability to address the unique needs of each patient.
-
-In contrast, dynamic treatment policies offer a more flexible and responsive approach to patient care. By incorporating real-time data and patient feedback, these policies allow healthcare providers to tailor treatment plans to the specific circumstances of each patient. This adaptability is particularly important in managing conditions where patient responses to treatment can change over time, such as in chronic diseases or complex medical cases.
-
-The transition from static to dynamic treatment policies has been driven by several factors, including advancements in evidence-based medicine and the increasing availability of electronic health records (EHRs). These developments have enabled healthcare providers to continuously monitor patient progress and make data-informed decisions about treatment adjustments. As a result, dynamic treatment policies have the potential to enhance the effectiveness and efficiency of medical care, reducing the risks of overtreatment or undertreatment.
-
-Dynamic treatment policies also align with the broader trend towards personalized medicine, which seeks to tailor medical interventions to the individual characteristics of each patient. By leveraging data-driven insights, healthcare providers can develop more precise and targeted treatment strategies, ultimately improving patient outcomes and satisfaction.
-
-In conclusion, the shift towards dynamic treatment policies represents a significant advancement in the field of healthcare. By embracing these adaptive strategies, healthcare providers can better meet the needs of individual patients, leading to more effective and efficient care delivery.
 
 ## Longitudinal modifiable treatment policies
 
