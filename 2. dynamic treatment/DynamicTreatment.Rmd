@@ -13,6 +13,8 @@ output:
 
 ------------------------------------------------------------------------
 
+[Notes: define "adaptive intervention", "optimal dynamic treatment policies",
+
 **Dynamic treatment policies** embody a healthcare model that actively *listens* to patients, continuously monitoring a broad range of factors to guide treatment decisions. In contrast, **static treatment policies** apply predefined rules based on a one-time assessment, assigning patients to *always treat* / *never treat* rules based on demographics, comorbidities, or other identifiers.
 
 Traditional research methodologies, including [randomized controlled trials (RCTs)](https://pmc.ncbi.nlm.nih.gov/articles/PMC8176647/ "If you are unfamiliar with RCTs, this paper from Zabor et al (2020) provides a foundational overview."), have historically followed principles aligned with static treatment policies. In these studies, patients are assessed at a single point in time, assigned to a static treatment regimen, and monitored for outcomes. Similarly, many [real-world evidence (RWE)](https://pmc.ncbi.nlm.nih.gov/articles/PMC8323556/ "If you are unfamiliar with real world evidence (RWE) study trials, this paper by Chodankar (2021) provides a foundational overview.") study designs have been developed to assess static treatments (for example, evaluating the long-term adverse effects of a treatment administered once, without considering subsequent treatment patterns).
@@ -36,7 +38,7 @@ This paper aims to provide both conceptual foundations and practical guidance fo
 
 ]
 
----
+------------------------------------------------------------------------
 
 # Dynamic Treatment Policies {.tabset}
 
@@ -48,7 +50,7 @@ This paper aims to provide both conceptual foundations and practical guidance fo
 
 Advancements in evidence-based medicine, coupled with the increased availability of electronic health records (EHRs) and real-time patient monitoring, have driven a shift toward more personalized medical care. This shift has led to the emergence of **dynamic treatment policies**, adaptive medical protocols that continuously adjust treatment decisions based on a patient’s evolving condition and response to therapy. Unlike static policies, dynamic treatment policies integrate real-time data, patient feedback, and clinical reassessments to refine treatment strategies over time. By incorporating ongoing evaluations, these policies enhance both the effectiveness and efficiency of care, reducing the risks associated with static approaches.
 
----
+------------------------------------------------------------------------
 
 ## Example: Lawn Watering Policies
 
@@ -78,15 +80,15 @@ Notice that the **static watering policy** treats all lawns as the same, and eve
 
 **Dynamic treatment policy #3** considers each yard's differences and updates information daily to develop a responsive treatment plan. It is the only treatment policy that addresses both underwatering and overwatering. However, this policy requires continuous monitoring and advanced technologies, which may not be available to all participants in the study.
 
----
+------------------------------------------------------------------------
 
 # A Brief History of Longitudinal Study Design in Clinical Trials {.tabset}
 
 ## Sequential Multiple Assignment Randomized Trials (SMARTs)
 
-In a traditional randomized controlled trials (RCTs), participants are randomly assigned to either a treatment or control group, ensuring that differences in outcomes can be attributed to the intervention rather than external factors. These trials follow a static treatment approach, meaning that once participants are assigned a treatment regimen, it remains unchanged throughout the study. While this design is effective for evaluating single, well-defined interventions, it does not account for how patients’ conditions evolve over time or how they may respond differently to treatment adjustments. As a result, RCTs may not fully capture the complexities of personalized medicine, where treatment decisions are dynamic and continuously tailored to individual patients.
+In a traditional randomized controlled trials (RCT), participants are randomly assigned to either a treatment or control group, ensuring that differences in outcomes can be attributed to the intervention rather than external factors. These trials follow a static treatment approach, meaning that once participants are assigned a treatment regimen, it remains unchanged throughout the study. While this design is effective for evaluating single, well-defined interventions, it does not account for how patients’ conditions evolve over time or how they may respond differently to treatment adjustments. As a result, RCTs may not fully capture the complexities of personalized medicine, where treatment decisions are dynamic and continuously tailored to individual patients.
 
-Recognizing the limitations of static treatment models in traditional RCTs, researchers developed **sequential multiple assignment randomized trials (SMARTs)** as a more flexible approach to evaluating adaptive interventions. SMART trials originated in the early 2000s as part of the broader movement toward personalized and precision medicine. The methodology was pioneered by behavioral and mental health researchers seeking to optimize treatment strategies for conditions like depression, ADHD, and substance abuse, where patient responses to initial treatments vary significantly. The goal of SMART designs is to mimic real-world clinical decision-making by allowing for treatment adjustments based on patient progress, rather than adhering to a fixed, one-size-fits-all approach. \*\*[[add a citation]]\*\*
+Recognizing the limitations of static treatment models in traditional RCTs, researchers developed **sequential multiple assignment randomized trials (SMARTs)** as a more flexible approach to evaluating adaptive interventions. SMART trials originated in the early 2000s as part of the broader movement toward personalized and precision medicine. The goal of SMART designs is to mimic real-world clinical decision-making by allowing for treatment adjustments based on patient progress, rather than adhering to a fixed, one-size-fits-all approach. \*\*[[add a citation]]\*\*
 
 SMART trials differ from traditional RCTs in that participants can be re-randomized at multiple decision points based on how they respond to initial treatments. This allows researchers to evaluate adaptive treatment strategies (ATSs)—structured decision rules that specify how treatments should be modified over time depending on individual patient needs. For example, in a SMART trial for depression treatment, patients who do not respond to an initial medication may be re-randomized to either an increased dose or a switch to a different medication, simulating the kind of decision-making that occurs in clinical practice.
 
@@ -94,7 +96,39 @@ The design of SMART trials builds upon earlier multi-stage decision-making frame
 
 The increasing adoption of SMART trials reflects a broader shift toward data-driven, patient-centered research methodologies. By generating evidence on how best to sequence and adjust treatments, SMART trials provide clinicians with actionable insights into optimizing long-term patient care. Their success has also paved the way for more advanced adaptive trial designs, including reinforcement learning approaches and hybrid methods that integrate SMART with real-world evidence and machine learning techniques. These innovations are helping to refine our understanding of dynamic treatment policies, ensuring that research keeps pace with the complexities of modern healthcare.
 
-[ Example: Lawn watering. Policy: Always on: every morning 9am water for 30 minutes Policy Andy: Surrendered to an intelligent system: Rachio listens to the weather service and deactivates if its going to rain. Policy Aimee: Designed so detects soil moisture + listens to the weather DAG: last two are dynamic and responsive to different characteristics. First is static Simulate data There is no possible optimal watering strategy Target outcome: greenness of grass. Design the ultimate strategy Now extend this: City planner is trying to see if the fatter sprinklers are better. He randomly assigns to the fatter sprinklers and designs a study areound the impact of the fatness. he notices Hector has his sprinkler off when it's raining and penalizes Hector: Anyone reactive is kicked out of the program. SMART trials are saying: we kind of get it. We're going to give you some combinations: Water every morning. Louise, water every third morning. But they are still not responsive to the weather -- variations on static assignment. SMART studies have limited ability to incorporate the weeather : the analysis may not even capture the weather and statistics would not be able to capture it. New strategist: if sunny, water. If rainy, don't water. Then we need analytic methods --- recover the rule from all the Trivial: categories of variables: e.g. color of the house. Or nutrients in the soil. Or what is downstream. What variety of grass (cate: conditional average treatment effects - we might identify a rule for different substrata. Different individualized treatment strategies based on actual traits of the yard and conditions.)(Listening should be different for different people)
+-----------------------------------------------
+
+## Example: Lawn Watering Policies
+
+Let's return to the lawn watering example to look at a SMART study design in practice. For this example, we will consider four simple adaptive policies that could be used to develop a dynamic treatment policy. Rather than looking at the daily weather, we will be adapting the amount of watering and the time of day that a lawn is watered, depending on a sample lawn's responsiveness to an initial treatment pattern. Let us define four adaptive interventions: 
+
+- **Intervention A**: Never water. (Control, i.e. allow nature to naturally take care of the lawn.)
+- **Intervention B**: Water every morning between 7--9am for half an hour.
+- **Intervention C**: Water every evening between 7--9pm for half an hour.
+- **Intervention D**: Water every morning between 7--9am for half an hour, **and** water every evening between 7--9pm for half an hour.
+
+The outcome of interest for this trial is greenness of lawn. Greenness of a lawn is assessed on a 10-point scale with 1 being brown and 10 being deep green. Responsiveness to a treatment pattern is defined as follows:
+
+- If the lawn is ranked < 6 at the start of an intervention, an increase of at least 2-points by the measurement point.
+- If the lawn is ranked 6-8 at the start of an intervention, an increase of at least 1-point by the measurement point.
+- If the lawn is ranked >8 at the start of an intervention, no decrease in greenness by the measurement point.
+
+At the start of the trial, all lawns are assessed for greenness and randomly assigned to either **intervention A** or **intervention B** [stage 1]. After four weeks, all lawns are re-assessed for greenness. Any lawn that is assessed as responsive to the initial treatment (e.g. *responder*) is kept on the same intervention (**A** or **B**); any lawn that is assessed as a **non-responder** is randomly reassigned to either treatment **intervention C** or **intervention D** [stage 2]. All lawns are evaluated for greenness one month after the second randomization, allowing assessment of the following possible adaptive interventions:
+
+- A --> responder --> A
+- A --> non-responder --> C
+- A --> non-responder --> D
+- B --> responder --> B (control)
+- B --> non-responder --> C
+- B --> non-responder --> D
+
+For this simple SMART design, we randomized at only two intervention points. It is easy to imagine extending this by adding additional interventions and re-randomizing based at responsiveness to treatment pattern at a more regular interval, say every two weeks for two months.
+
+-----------------------------------------------
+
+> In a prototypical SMART (Figure 1), all participants are randomized at the beginning of stage 1 to treatment A or B. Responders continue to receive their assigned stage 1 treatment, and non-responders are re-randomized at the beginning of stage 2 to treatment C or D. SMARTs often include multiple adaptive interventions, each represented by a collection of treatment paths offered to individual patients across the multiple stages. The SMART in Figure 1 has four adaptive interventions, each based on a pair of the 6 treatment paths. One of them is: “Start with treatment A in stage 1 and assess the patient for early signs of response at the end of stage 1. If the patient is an early responder, continue treatment A in stage 2; whereas, if the patient is a non-responder switch to treatment C in stage 2.” This could be represented as the pair (A → responder → A, A → non-responder → C). The other three adaptive interventions are (A → responder → A, A → non-responder → D); (B → responder → B, B → non-responder → C); and (B → responder → B, B → non-responder → D). (https://pmc.ncbi.nlm.nih.gov/articles/PMC10061579/)
+
+"lop[=[ Example: Lawn watering. Policy: Always on: every morning 9am water for 30 minutes Policy Andy: Surrendered to an intelligent system: Rachio listens to the weather service and deactivates if its going to rain. Policy Aimee: Designed so detects soil moisture + listens to the weather DAG: last two are dynamic and responsive to different characteristics. First is static Simulate data There is no possible optimal watering strategy Target outcome: greenness of grass. Design the ultimate strategy Now extend this: City planner is trying to see if the fatter sprinklers are better. He randomly assigns to the fatter sprinklers and designs a study areound the impact of the fatness. he notices Hector has his sprinkler off when it's raining and penalizes Hector: Anyone reactive is kicked out of the program. SMART trials are saying: we kind of get it. We're going to give you some combinations: Water every morning. Louise, water every third morning. But they are still not responsive to the weather -- variations on static assignment. SMART studies have limited ability to incorporate the weeather : the analysis may not even capture the weather and statistics would not be able to capture it. New strategist: if sunny, water. If rainy, don't water. Then we need analytic methods --- recover the rule from all the Trivial: categories of variables: e.g. color of the house. Or nutrients in the soil. Or what is downstream. What variety of grass (cate: conditional average treatment effects - we might identify a rule for different substrata. Different individualized treatment strategies based on actual traits of the yard and conditions.)(Listening should be different for different people)
 
 vcork1 variant (double the dosage) <https://pmc.ncbi.nlm.nih.gov/articles/PMC2787394/>
 
