@@ -9,10 +9,11 @@
 <meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
 
 
-<meta name="author" content />
+<meta name="author" content="Aimee Harisson and Andy Wilson" />
 
+<meta name="date" content="2025-02-16" />
 
-<title>Beyond always treat</title>
+<title>Synthetic data and LMTP demo</title>
 
 <script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
 // be compatible with the behavior of Pandoc < 2.8).
@@ -1478,792 +1479,260 @@ border-radius: 0px;
 
 
 
-<h1 class="title toc-ignore">Beyond always treat</h1>
-<h3 class="subtitle">How dynamic treatment strategies open a door for
-real world effectiveness evaluation</h3>
-<h4 class="author"></h4>
+<h1 class="title toc-ignore">Synthetic data and LMTP demo</h1>
+<h4 class="author">Aimee Harisson and Andy Wilson</h4>
+<h4 class="date">February 16, 2025</h4>
 
 </div>
 
 
-<hr />
-<p><strong>Dynamic treatment policies</strong> embody a healthcare model
-that actively <em>listens</em> to patients, continuously monitoring a
-broad range of factors to guide treatment decisions. In contrast,
-<strong>static treatment policies</strong> apply predefined rules based
-on a one-time assessment, assigning patients to <em>always treat</em> /
-<em>never treat</em> rules based on demographics, comorbidities, or
-other identifiers.</p>
-<p>Traditional research methodologies, including <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC8176647/" title="If you are unfamiliar with RCTs, this paper from Zabor et al (2020) provides a foundational overview.">randomized
-controlled trials (RCTs)</a>, have historically followed principles
-aligned with static treatment policies. In these studies, patients are
-assessed at a single point in time, assigned to a static treatment
-regimen, and monitored for outcomes. Similarly, many <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC8323556/" title="If you are unfamiliar with real world evidence (RWE) study trials, this paper by Chodankar (2021) provides a foundational overview.">real-world
-evidence (RWE)</a> study designs have been developed to assess static
-treatments (for example, evaluating the long-term adverse effects of a
-treatment administered once, without considering subsequent treatment
-patterns).</p>
-<p>As healthcare providers increasingly embrace dynamic treatment
-strategies, there is a pressing need to evolve research methodologies to
-accurately assess their outcomes. Traditional study designs often fall
-short in capturing the complexities of dynamic treatment policies. For
-instance, while existing research methods can track adverse events in
-response to a static treatment protocol, they may not effectively
-evaluate how continuous adjustments in treatment impact patient outcomes
-over time.</p>
-<p>Advances in longitudinal study designs seek to address this gap by
-developing methodologies capable of studying dynamic treatment policies
-within real-world settings. In this paper, we will look at the history
-of reactive treatment studies in clinical research, focusing on recent
-advancements in RWE/RWD study design. We will examine best practices for
-feasibility assessment, data collection, and study design, as well as
-explore advanced causal inference frameworks, such as targeted maximum
-likelihood estimation (LTMLE), that leverage machine learning to uncover
-causal relationships in dynamic treatment research.</p>
-<p>This paper aims to provide both conceptual foundations and practical
-guidance for researchers interested in studying dynamic treatment
-policies. For those new to causal inference, we recommend first
-reviewing our Crash Course in Causal Methods, which introduces core
-causal inference concepts essential for understanding the methodologies
-discussed in this paper.</p>
-<div id="overview" class="section level2">
-<h2>Overview</h2>
-<p>[in progress:</p>
-<ol style="list-style-type: decimal">
-<li>Introduction to static vs. dynamic treatment policies.</li>
-<li>Historical context: RCTs and SMART trials.</li>
-<li>Longitudinal studies in RWD</li>
-<li>Advanced causal methods</li>
-<li>Tools + future</li>
-<li>Worked example: Permissive anemia.</li>
-</ol>
-<p>]</p>
-<hr />
+<pre class="r"><code># install.packages(&quot;ltmle_1.2-0.tar.gz&quot;, repos = NULL, type = &quot;source&quot;)</code></pre>
+<div id="thanks" class="section level1">
+<h1>Thanks</h1>
+<p>Special Thanks to Haodong Li!</p>
 </div>
-<div id="dynamic-treatment-policies" class="section level1 tabset">
-<h1 class="tabset">Dynamic Treatment Policies</h1>
-<div id="overview-1" class="section level2">
-<h2>Overview</h2>
-<p><strong>Treatment policies</strong> are structured guidelines or
-protocols used by healthcare providers to determine appropriate
-strategies for managing specific conditions. Grounded in clinical
-research, these policies provide a framework for decision-making,
-guiding clinicians in selecting optimal treatment options while
-balancing factors such as efficacy, safety, and cost-effectiveness.</p>
-<p><strong>Static treatment policies</strong> prescribe fixed medical
-protocols that apply a uniform approach to patient care, often following
-an <em>always treat</em> or <em>never treat</em> rule. These policies do
-not account for individual patient variability or changing health
-conditions over time. While static policies can simplify clinical
-decision-making and promote uniformity in care, their rigidity can lead
-to <em>overtreatment</em> or <em>undertreatment</em> when patient needs
-evolve beyond the initial treatment framework.</p>
-<p>Advancements in evidence-based medicine, coupled with the increased
-availability of electronic health records (EHRs) and real-time patient
-monitoring, have driven a shift toward more personalized medical care.
-This shift has led to the emergence of <strong>dynamic treatment
-policies</strong>, adaptive medical protocols that continuously adjust
-treatment decisions based on a patient’s evolving condition and response
-to therapy. Unlike static policies, dynamic treatment policies integrate
-real-time data, patient feedback, and clinical reassessments to refine
-treatment strategies over time. By incorporating ongoing evaluations,
-these policies enhance both the effectiveness and efficiency of care,
-reducing the risks associated with static approaches.</p>
+<div id="libraries-used" class="section level1">
+<h1>Libraries used</h1>
+<pre class="r"><code>library(tidyverse)
+library(tmle)
+library(ltmle)
+data(sampleDataForLtmleMSM)
+library(lmtp)</code></pre>
 </div>
-<div id="example-lawn-watering-policies" class="section level2">
-<h2>Example: Lawn Watering Policies</h2>
-<p>Let’s consider a sample study to look at the effects of regular
-watering on the greenness of lawns in a single town. For this study we
-will consider three treatment policies:</p>
-<ul>
-<li><p><strong>Static watering policy:</strong> Always water the lawn
-for thirty minutes, once a day, between 7am and 9am.</p></li>
-<li><p><strong>Dynamic watering policy #1:</strong> Every morning,
-review the previous day’s weather, and proceed as follows:</p>
-<ul>
-<li><p>If it rained for &gt;1 hour on the previous day, do not
-water.</p></li>
-<li><p>Otherwise, water for thirty minutes, between 7am and
-9am.</p></li>
-</ul></li>
-<li><p><strong>Dynamic watering policy #2:</strong> Using smart sensors
-installed in each yard, review the yard’s soil moisture content, and
-proceed as follows:</p>
-<ul>
-<li><p>If the lawn’s average soil moisture is above 70%, do not
-water.</p></li>
-<li><p>If the lawn’s average soil moisture is between 50-70%, water for
-15 minutes between 7am and 9am.</p></li>
-<li><p>If the lawn’s average soil moisture is between 25-50%, water for
-1 hour between 7am and 9am.</p></li>
-<li><p>If the lawn’s average soil moisture is below 25%, water for 1
-hour between 7am and 9am, and for 30 minutes between 7pm and
-9pm.</p></li>
-</ul></li>
-</ul>
-<p>Notice that the <strong>static watering policy</strong> treats all
-lawns as the same, and every day as the same. It is easy to imagine this
-<em>always on</em> treatment pattern leading to overwatering (not to
-mention wasted resources).</p>
-<p><strong>Dynamic watering policy #1</strong> uses low-cost methods to
-assess environmental conditions, creating a responsive watering schedule
-that avoids overwatering. It does not take into account variations in
-individual lawns, which might be caused by location or other covariates
-that could affect water retention.</p>
-<p><strong>Dynamic treatment policy #3</strong> considers each yard’s
-differences and updates information daily to develop a responsive
-treatment plan. It is the only treatment policy that addresses both
-underwatering and overwatering. However, this policy requires continuous
-monitoring and advanced technologies, which may not be available to all
-participants in the study.</p>
-<hr />
+<div id="generate-synthetic-data" class="section level1">
+<h1>Generate synthetic data</h1>
+<pre class="r"><code># data with two time stage: O = (L(1), A(1), L(2), A(2), Y)
+get_data  &lt;- function(n) {
+  L1 = rnorm(n)
+  A1 = rbinom(n, 1, plogis(0.01*(L1)))
+  L2 = 0.5*L1 + 0.7*A1 + rnorm(n)
+  A2 = rbinom(n, 1, plogis(0.01*(L2+A1+L1)))
+  Y = rbinom(n, 1, plogis(3*L1*A1 + 3*L2*A2))
+  O = data.frame(L1, A1, L2, A2, Y)
+  return(O)
+}</code></pre>
+<div id="helper-function-generating-counterfactual-data" class="section level2">
+<h2>helper function generating counterfactual data</h2>
+<pre class="r"><code>get_data_d &lt;- function(n, abar = 1) {
+  L1 = rnorm(n)
+  if (abar == &quot;DTR&quot;) {
+    A1 = as.numeric(L1 &lt; 0)
+  } else {
+    A1 = abar[1]
+  }
+  L2 = 0.5*L1 + 0.7*A1 + rnorm(n)
+  if (abar == &quot;DTR&quot;) {
+    A2 = as.numeric(L2 &lt; 0)
+  } else {
+    A2 = abar[1]
+  }
+  Y = rbinom(n, 1, plogis(3*L1*A1 + 3*L2*A2))
+  O = data.frame(L1, A1, L2, A2, Y)
+  return(O)
+}</code></pre>
+</div>
+<div id="verify-truth" class="section level2">
+<h2>verify truth</h2>
+<p><span class="math inline">\(E(Y_{\bar{a} = 1})\)</span> = 0.64</p>
+<pre class="r"><code>set.seed(123)
+df_big &lt;- get_data_d(1e6, abar = 1)
+mean(df_big$Y)</code></pre>
+<pre><code>## [1] 0.64304</code></pre>
+</div>
+<div id="verify-truth-policy" class="section level2">
+<h2>verify truth (policy)</h2>
+<p><span class="math inline">\(E(Y_{\bar{a} = d})\)</span> = 0.26, where
+d = <span class="math inline">\(L1 &lt; 0, L2 &lt;0\)</span></p>
+<pre class="r"><code>df_big &lt;- get_data_d(1e6, abar = &quot;DTR&quot;)
+mean(df_big$Y)</code></pre>
+<pre><code>## [1] 0.261097</code></pre>
 </div>
 </div>
-<div id="a-brief-history-of-longitudinal-study-design-in-clinical-trials" class="section level1 tabset">
-<h1 class="tabset">A Brief History of Longitudinal Study Design in
-Clinical Trials</h1>
-<div id="sequential-multiple-assignment-randomized-trials-smarts" class="section level2">
-<h2>Sequential Multiple Assignment Randomized Trials (SMARTs)</h2>
-<p>In a traditional randomized controlled trials (RCTs), participants
-are randomly assigned to either a treatment or control group, ensuring
-that differences in outcomes can be attributed to the intervention
-rather than external factors. These trials follow a static treatment
-approach, meaning that once participants are assigned a treatment
-regimen, it remains unchanged throughout the study. While this design is
-effective for evaluating single, well-defined interventions, it does not
-account for how patients’ conditions evolve over time or how they may
-respond differently to treatment adjustments. As a result, RCTs may not
-fully capture the complexities of personalized medicine, where treatment
-decisions are dynamic and continuously tailored to individual
-patients.</p>
-<p>Recognizing the limitations of static treatment models in traditional
-RCTs, researchers developed <strong>sequential multiple assignment
-randomized trials (SMARTs)</strong> as a more flexible approach to
-evaluating adaptive interventions. SMART trials originated in the early
-2000s as part of the broader movement toward personalized and precision
-medicine. The methodology was pioneered by behavioral and mental health
-researchers seeking to optimize treatment strategies for conditions like
-depression, ADHD, and substance abuse, where patient responses to
-initial treatments vary significantly. The goal of SMART designs is to
-mimic real-world clinical decision-making by allowing for treatment
-adjustments based on patient progress, rather than adhering to a fixed,
-one-size-fits-all approach. **[[add a citation]]**</p>
-<p>SMART trials differ from traditional RCTs in that participants can be
-re-randomized at multiple decision points based on how they respond to
-initial treatments. This allows researchers to evaluate adaptive
-treatment strategies (ATSs)—structured decision rules that specify how
-treatments should be modified over time depending on individual patient
-needs. For example, in a SMART trial for depression treatment, patients
-who do not respond to an initial medication may be re-randomized to
-either an increased dose or a switch to a different medication,
-simulating the kind of decision-making that occurs in clinical
-practice.</p>
-<p>The design of SMART trials builds upon earlier multi-stage
-decision-making frameworks in biostatistics and engineering, but their
-application in healthcare research gained traction as precision medicine
-became a priority. Early applications focused on chronic disease
-management, psychiatry, and substance use disorders, demonstrating that
-treatment sequencing and individual tailoring could significantly
-improve patient outcomes. Over time, SMART methodologies expanded into
-other fields, including oncology, cardiology, and infectious diseases,
-where dynamic treatment adaptation is crucial.</p>
-<p>The increasing adoption of SMART trials reflects a broader shift
-toward data-driven, patient-centered research methodologies. By
-generating evidence on how best to sequence and adjust treatments, SMART
-trials provide clinicians with actionable insights into optimizing
-long-term patient care. Their success has also paved the way for more
-advanced adaptive trial designs, including reinforcement learning
-approaches and hybrid methods that integrate SMART with real-world
-evidence and machine learning techniques. These innovations are helping
-to refine our understanding of dynamic treatment policies, ensuring that
-research keeps pace with the complexities of modern healthcare.</p>
-<p>[ Example: Lawn watering. Policy: Always on: every morning 9am water
-for 30 minutes Policy Andy: Surrendered to an intelligent system: Rachio
-listens to the weather service and deactivates if its going to rain.
-Policy Aimee: Designed so detects soil moisture + listens to the weather
-DAG: last two are dynamic and responsive to different characteristics.
-First is static Simulate data There is no possible optimal watering
-strategy Target outcome: greenness of grass. Design the ultimate
-strategy Now extend this: City planner is trying to see if the fatter
-sprinklers are better. He randomly assigns to the fatter sprinklers and
-designs a study areound the impact of the fatness. he notices Hector has
-his sprinkler off when it’s raining and penalizes Hector: Anyone
-reactive is kicked out of the program. SMART trials are saying: we kind
-of get it. We’re going to give you some combinations: Water every
-morning. Louise, water every third morning. But they are still not
-responsive to the weather – variations on static assignment. SMART
-studies have limited ability to incorporate the weeather : the analysis
-may not even capture the weather and statistics would not be able to
-capture it. New strategist: if sunny, water. If rainy, don’t water. Then
-we need analytic methods — recover the rule from all the Trivial:
-categories of variables: e.g. color of the house. Or nutrients in the
-soil. Or what is downstream. What variety of grass (cate: conditional
-average treatment effects - we might identify a rule for different
-substrata. Different individualized treatment strategies based on actual
-traits of the yard and conditions.)(Listening should be different for
-different people)</p>
-<p>vcork1 variant (double the dosage) <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC2787394/" class="uri">https://pmc.ncbi.nlm.nih.gov/articles/PMC2787394/</a></p>
-<p>Then when looking at real longitudinal data, can’t recreate the RCT
-because the intention is that you’re looking at more responsive
-treatment so it wouldn’t be possible. ] [ Can set the stage with this
-and look at Permissive Anemia. So after the walk through, let’s take
-what we learned and set-up a study design ]</p>
+<div id="generate-observed-data" class="section level1">
+<h1>generate observed data</h1>
+<pre class="r"><code>set.seed(123)
+df &lt;- get_data(1e4)
+head(df)</code></pre>
+<pre><code>##            L1 A1         L2 A2 Y
+## 1 -0.56047565  1 -0.9340867  0 0
+## 2 -0.23017749  0 -0.6944660  0 1
+## 3  1.55870831  1  0.6183100  1 1
+## 4  0.07050839  1  1.7079325  1 1
+## 5  0.12928774  0  0.6837896  0 0
+## 6  1.71506499  1  2.9429782  0 1</code></pre>
 </div>
-<div id="section" class="section level2">
-<h2></h2>
+<div id="ltmle-estimations" class="section level1">
+<h1>ltmle estimation(s)</h1>
+<div id="ltmle-estimate-1-always-on" class="section level2">
+<h2>ltmle estimate 1: always on</h2>
+<pre class="r"><code>res.11 = ltmle(df,
+            Anodes = c(&quot;A1&quot;, &quot;A2&quot;),
+            Lnodes = c(&quot;L1&quot;, &quot;L2&quot;),
+            Ynodes = &quot;Y&quot;,
+            abar = c(1,1),
+            SL.library = c(&quot;SL.glm&quot;, &quot;SL.earth&quot;, &quot;SL.xgboost&quot;), 
+            SL.cvControl = list(V=10))
+summary(res.11)</code></pre>
+<pre><code>## Estimator:  tmle 
+## Call:
+## ltmle(data = df, Anodes = c(&quot;A1&quot;, &quot;A2&quot;), Lnodes = c(&quot;L1&quot;, &quot;L2&quot;), 
+##     Ynodes = &quot;Y&quot;, abar = c(1, 1), SL.library = c(&quot;SL.glm&quot;, &quot;SL.earth&quot;, 
+##         &quot;SL.xgboost&quot;), SL.cvControl = list(V = 10))
+## 
+##    Parameter Estimate:  0.64334 
+##     Estimated Std Err:  0.0068468 
+##               p-value:  &lt;2e-16 
+##     95% Conf Interval: (0.62992, 0.65676)</code></pre>
 </div>
+<div id="ltmle-estimate-2-always-off" class="section level2">
+<h2>ltmle estimate 2: always off</h2>
+<pre class="r"><code>res.00 = ltmle(df,
+            Anodes = c(&quot;A1&quot;, &quot;A2&quot;),
+            Lnodes = c(&quot;L1&quot;, &quot;L2&quot;),
+            Ynodes = &quot;Y&quot;,
+            abar = c(0,0),
+            SL.library = c(&quot;SL.glm&quot;, &quot;SL.earth&quot;, &quot;SL.xgboost&quot;), 
+            SL.cvControl = list(V=10))
+summary(res.00)</code></pre>
+<pre><code>## Estimator:  tmle 
+## Call:
+## ltmle(data = df, Anodes = c(&quot;A1&quot;, &quot;A2&quot;), Lnodes = c(&quot;L1&quot;, &quot;L2&quot;), 
+##     Ynodes = &quot;Y&quot;, abar = c(0, 0), SL.library = c(&quot;SL.glm&quot;, &quot;SL.earth&quot;, 
+##         &quot;SL.xgboost&quot;), SL.cvControl = list(V = 10))
+## 
+##    Parameter Estimate:  0.49045 
+##     Estimated Std Err:  0.0099989 
+##               p-value:  &lt;2e-16 
+##     95% Conf Interval: (0.47086, 0.51005)</code></pre>
 </div>
-<div id="dags" class="section level1">
-<h1>DAGs</h1>
-<p>greenness of grass time of watering weather that : sunniness /
-heat</p>
-<p>if this is how we draw our dag, we know what variables we need before
-we pull. If we don’t have our DAG, we pull all of this then draw the DAG
-then we don’t have the possibility of unobserved variables in the
-DAG.</p>
-<p>permissive anemia: heart rate, hemoglobin, blood pressure. Look for
-what pieces could possibly be used in a policy. Intrusion of selection
-bias if you only pull in people with hemoglobin matched with records. So
-that’s pulling iin people who are hugely sick. Could I predict a patient
-is missing from their covariates: informative missingness. Else:
-non-informative missingness and you can dump them.</p>
-<p>Analytics: LMTLE You have to be able to quickly make causal contrast
-: turn a rule into a policy matrix which isn’t easy Wrapper to do this:
-LMTP package (Haodong); Turn the data into a policy matrix that is
-flipped on based on policy conditions. Intervene on this for your G
-computation</p>
-<ul>
-<li><p>This is where SMART trials were born. (We think of SMART as
-responsive or reactive; run out of runway anticipating these dynamic
-treatments)</p></li>
-<li><p>“ex-ante”: hard to anticipate all of the meaningful
-patterns</p></li>
-<li><p>We want something that is reactive that can anticipate all the
-patterns.</p></li>
-<li><p>Want data who we have longitudinal records, where treatment
-dynamics have been recorded, with variables you think it reacts
-To</p></li>
-<li><p>Worked example: intubation / outcome: COVID induced death;
-decision: when to intubate (not just “if”), what is the
-strategy?</p></li>
-<li><p>Blood transfusion: Permissive anemia; blood tranf. is hard on
-your body but you watch your body and develop an optimal
-strategy</p></li>
-<li><p>Listen to hemoglobin (and what else?) - age ? - DAG is
-essential</p></li>
-<li><p>Sidebar: DAG is used differently in longitudinal studies. (A is
-acyclic and you’re literally inviting a cycle.) (We don’t believe cycles
-exist because a key feature is the passing of time. Our whole body is
-feedback loops but they become DAGS with the passage of time (only
-listens to the past)).</p></li>
-<li><p>Non parametric structural equations (don’t have to articulate the
-form in the same way in these)<br />
-</p></li>
-<li><p>But in a problem with this listening nature, that doesn’t lend
-itself to a static treatment, you need to model and know what the
-triggers are. When and how much?</p></li>
-<li><p>How we articulate the problem drives the analytics: If we only
-pull the patients with a blood transfusion, we condition on that
-outcome. But if we pull on patients permissive anemia we generalize
-further.</p></li>
-<li><p>Who do we condition on?</p></li>
-<li><p>Sidebar: What does it look like if we only condition on an
-outcome.</p></li>
-<li><p>Background on Dynamic Treatment Regimes (DTR) and Sequential
-Multiple Assignment Randomized Trials (SMART).</p></li>
-<li><p>Discussion on the use of dynamic treatment policies in healthcare
-and the role of structured observational data.</p></li>
-</ul>
-<div id="longitudinal-modifiable-treatment-policies" class="section level2">
-<h2>Longitudinal modifiable treatment policies</h2>
-<p>Longitudinal modifiable treatment policies (LMTPs) are a type of
-dynamic treatment policy providing adaptive healthcare strategies that
-evolve over time, based on continuous monitoring and assessment of a
-patient’s health status. These policies leverage data-driven insights
-from regular health evaluations and patient feedback to adjust treatment
-plans. They are particularly useful in managing chronic conditions,
-allowing for proactive interventions and adjustments in response to
-changes in the patient’s condition or emerging medical evidence.</p>
-<p>LMTPs can be developed using a variety of causal inference models
-adapted to address the complexities of longitudinal data. Traditional
-approaches such as longitudinal propensity score methods, marginal
-structural models, and instrumental variable analysis have been
-instrumental tools to estimate causal effects by accounting for
-confounding variables over time. However, these methods often face
-limitations in handling complex, high-dimensional data and time-varying
-confounders. Longitudinal Targeted Maximum Likelihood Estimation (LTMLE)
-offers a more powerful alternative by integrating machine learning
-techniques to provide robust and efficient causal estimates. In this
-paper, we focus on LTMLE due to its ability to adaptively model dynamic
-treatment regimes and improve the precision of causal inferences in
-longitudinal studies.</p>
+<div id="ltmle-estimate-3-dynamic-rule" class="section level2">
+<h2>ltmle estimate 3: dynamic rule</h2>
+<pre class="r"><code>d &lt;- cbind(df$L1 &lt; 0, df$L2 &lt;0)
+
+res_d = ltmle(df,
+              Anodes = c(&quot;A1&quot;, &quot;A2&quot;),
+              Lnodes = c(&quot;L1&quot;, &quot;L2&quot;),
+              Ynodes = &quot;Y&quot;,
+              abar = d,
+              SL.library = c(&quot;SL.glm&quot;,&quot;SL.earth&quot;, &quot;SL.xgboost&quot;), 
+              SL.cvControl = list(V=10))
+summary(res_d)</code></pre>
+<pre><code>## Estimator:  tmle 
+## Call:
+## ltmle(data = df, Anodes = c(&quot;A1&quot;, &quot;A2&quot;), Lnodes = c(&quot;L1&quot;, &quot;L2&quot;), 
+##     Ynodes = &quot;Y&quot;, abar = d, SL.library = c(&quot;SL.glm&quot;, &quot;SL.earth&quot;, 
+##         &quot;SL.xgboost&quot;), SL.cvControl = list(V = 10))
+## 
+##    Parameter Estimate:  0.26342 
+##     Estimated Std Err:  0.0080745 
+##               p-value:  &lt;2e-16 
+##     95% Conf Interval: (0.2476, 0.27925)</code></pre>
 </div>
-<div id="proposed-text" class="section level2">
-<h2>Proposed Text</h2>
-<p>Longitudinal modifiable treatment policies (LMTPs) are a
-sophisticated approach to dynamic treatment that emphasizes continuous
-adaptation based on patient-specific data. These policies are
-particularly well-suited for managing chronic conditions, where patient
-health status can fluctuate over time. By leveraging regular health
-evaluations and patient feedback, LMTPs enable healthcare providers to
-make proactive adjustments to treatment plans, ensuring that
-interventions remain aligned with the patient’s evolving needs.</p>
-<p>The development of LMTPs is supported by a range of causal inference
-models that are designed to handle the complexities of longitudinal
-data. Traditional methods, such as longitudinal propensity score methods
-and marginal structural models, have been instrumental in estimating
-causal effects by accounting for confounding variables over time.
-However, these approaches often face challenges in dealing with
-high-dimensional data and time-varying confounders.</p>
-<p>Longitudinal Targeted Maximum Likelihood Estimation (LTMLE) offers a
-more powerful alternative by integrating machine learning techniques to
-provide robust and efficient causal estimates. LTMLE is particularly
-effective in modeling dynamic treatment regimes, as it can adaptively
-account for the complex relationships between variables over time. By
-improving the precision of causal inferences, LTMLE enhances the ability
-of researchers to develop and evaluate LMTPs.</p>
-<p>In practice, LMTPs require a comprehensive understanding of the
-patient’s health trajectory and the factors that influence treatment
-outcomes. This involves collecting and analyzing longitudinal data,
-identifying relevant confounders, and specifying appropriate models for
-causal inference. By doing so, healthcare providers can develop
-treatment strategies that are both evidence-based and tailored to the
-individual needs of each patient.</p>
-<p>Overall, LMTPs represent a significant advancement in the field of
-personalized medicine. By embracing these adaptive strategies,
-healthcare providers can improve the quality of care for patients with
-chronic conditions, ultimately leading to better health outcomes and
-more efficient use of healthcare resources.</p>
+<div id="ltmle-estimate-4-ate" class="section level2">
+<h2>ltmle estimate 4: ATE</h2>
+<pre class="r"><code>res.ATE = ltmle(df,
+            Anodes = c(&quot;A1&quot;, &quot;A2&quot;),
+            Lnodes = c(&quot;L1&quot;, &quot;L2&quot;),
+            Ynodes = &quot;Y&quot;,
+            abar = list(c(1,1), c(0,0)),
+            SL.library = c(&quot;SL.glm&quot;, &quot;SL.earth&quot;, &quot;SL.xgboost&quot;), 
+            SL.cvControl = list(V=10))
+(Z &lt;- summary(res.ATE))</code></pre>
+<pre><code>## Estimator:  tmle 
+## Call:
+## ltmle(data = df, Anodes = c(&quot;A1&quot;, &quot;A2&quot;), Lnodes = c(&quot;L1&quot;, &quot;L2&quot;), 
+##     Ynodes = &quot;Y&quot;, abar = list(c(1, 1), c(0, 0)), SL.library = c(&quot;SL.glm&quot;, 
+##         &quot;SL.earth&quot;, &quot;SL.xgboost&quot;), SL.cvControl = list(V = 10))
+## 
+## Treatment Estimate:
+##    Parameter Estimate:  0.64336 
+##     Estimated Std Err:  0.0068628 
+##               p-value:  &lt;2e-16 
+##     95% Conf Interval: (0.62991, 0.65681) 
+## 
+## Control Estimate:
+##    Parameter Estimate:  0.49045 
+##     Estimated Std Err:  0.01009 
+##               p-value:  &lt;2e-16 
+##     95% Conf Interval: (0.47067, 0.51023) 
+## 
+## Additive Treatment Effect:
+##    Parameter Estimate:  0.15291 
+##     Estimated Std Err:  0.012141 
+##               p-value:  &lt;2e-16 
+##     95% Conf Interval: (0.12912, 0.17671) 
+## 
+## Relative Risk:
+##    Parameter Estimate:  1.3118 
+##   Est Std Err log(RR):  0.023071 
+##               p-value:  &lt;2e-16 
+##     95% Conf Interval: (1.2538, 1.3725) 
+## 
+## Odds Ratio:
+##    Parameter Estimate:  1.8742 
+##   Est Std Err log(OR):  0.049985 
+##               p-value:  &lt;2e-16 
+##     95% Conf Interval: (1.6993, 2.0671)</code></pre>
+<div id="odds-ratio-comparing-always-on-vs.-always-off" class="section level3">
+<h3>Odds ratio comparing always on vs. always off</h3>
+<pre class="r"><code>Z$effect.measures$OR$estimate</code></pre>
+<pre><code>##        A 
+## 1.874215</code></pre>
+<pre class="r"><code>Z$effect.measures$OR$CI</code></pre>
+<pre><code>##       2.5%    97.5%
+## A 1.699307 2.067127</code></pre>
 </div>
 </div>
-<div id="observational-data-in-dynamic-treatment" class="section level1">
-<h1><strong>Observational Data in Dynamic Treatment</strong></h1>
-<div id="proposed-section-goals" class="section level2">
-<h2>Proposed section goals</h2>
-<ul>
-<li>Limitations of time-based data in observational studies.</li>
-<li>Overview of potential data sources for dynamic treatment
-research.</li>
-<li>Criteria for determining feasibility in time-based research.</li>
-</ul>
 </div>
-<div id="proposed-text-1" class="section level2">
-<h2>Proposed Text</h2>
-<p>Observational data plays a crucial role in dynamic treatment
-research, providing valuable insights into patient trajectories and
-treatment outcomes. However, the use of time-based data in observational
-studies presents several challenges that must be addressed to ensure the
-validity and reliability of research findings.</p>
-<p>One of the primary limitations of time-based data is the potential
-for confounding, where unmeasured variables may influence both the
-treatment and the outcome. This can lead to biased estimates of causal
-effects, making it difficult to draw accurate conclusions about the
-effectiveness of different treatment strategies. To mitigate this issue,
-researchers must carefully consider the design and analysis of
-observational studies, employing advanced statistical techniques to
-account for confounding variables.</p>
-<p>Despite these challenges, observational data offers a rich source of
-information for dynamic treatment research. Electronic health records
-(EHRs), patient registries, and other forms of structured data provide
-detailed longitudinal information on patient health status, treatment
-history, and outcomes. By leveraging these data sources, researchers can
-gain a deeper understanding of the factors that influence treatment
-effectiveness and develop more personalized and adaptive treatment
-strategies.</p>
-<p>When determining the feasibility of time-based research, several
-criteria must be considered. These include the availability and quality
-of data, the ability to accurately measure relevant variables, and the
-potential for confounding. Additionally, researchers must assess the
-generalizability of their findings, considering whether the study
-population is representative of the broader patient population.</p>
-<p>In conclusion, while time-based data in observational studies
-presents certain challenges, it also offers significant opportunities
-for advancing dynamic treatment research. By carefully addressing the
-limitations and leveraging the strengths of observational data,
-researchers can develop more effective and personalized treatment
-strategies, ultimately improving patient outcomes and the quality of
-care.</p>
-</div>
-</div>
-<div id="foundations-of-causal-inference" class="section level1">
-<h1><strong>Foundations of Causal Inference</strong></h1>
-<div id="proposed-section-goals-1" class="section level2">
-<h2>Proposed section goals</h2>
-<ul>
-<li>Introduction to causal inference and the construction of Directed
-Acyclic Graphs (DAGs).</li>
-<li>Reference to previous team publications for foundational
-methods.</li>
-<li><strong>Existing Text:</strong>
-<ul>
-<li>“Counterfactual outcomes refer to the hypothetical scenarios of what
-would have happened to an individual if they had received a different
-treatment or intervention than they actually did. In the context of
-longitudinal analysis, counterfactual outcomes are crucial for
-understanding the causal effects of time-varying treatments over
-time.”</li>
-</ul></li>
-</ul>
-</div>
-<div id="proposed-text-2" class="section level2">
-<h2>Proposed Text</h2>
-<p>Causal inference is a fundamental aspect of dynamic treatment
-research, providing the framework for understanding the relationships
-between treatments, outcomes, and confounders. At its core, causal
-inference seeks to estimate the effect of a treatment or intervention on
-an outcome, accounting for the influence of other variables that may
-affect this relationship.</p>
-<p>Directed Acyclic Graphs (DAGs) are a powerful tool for visualizing
-and analyzing causal relationships. These graphical representations
-consist of nodes, representing variables, and directed edges, indicating
-causal influences. The acyclic nature of DAGs ensures that there are no
-feedback loops, allowing researchers to clearly delineate the causal
-pathways and dependencies within a system.</p>
-<p>In the context of longitudinal studies, DAGs are particularly
-valuable for modeling the complex temporal relationships between
-time-varying treatments, outcomes, and confounders. By providing a clear
-framework for understanding these relationships, DAGs guide the
-specification of models and the selection of variables for causal
-inference. This ensures that the causal effects are estimated
-accurately, enhancing the robustness and validity of the research
-findings.</p>
-<p>Counterfactual outcomes are another key concept in causal inference,
-representing the hypothetical scenarios of what would have happened to
-an individual if they had received a different treatment or
-intervention. By comparing the observed outcomes with these
-counterfactual scenarios, researchers can estimate the impact of
-different treatment strategies on patient trajectories. This approach is
-crucial for identifying the most effective interventions and informing
-the development of adaptive treatment policies.</p>
-<p>In summary, causal inference provides the foundation for dynamic
-treatment research, enabling researchers to estimate the effects of
-time-varying treatments and develop more personalized and effective
-treatment strategies. By leveraging tools such as DAGs and
-counterfactual outcomes, researchers can gain a deeper understanding of
-the causal relationships within a system, ultimately improving the
-quality of care and patient outcomes.</p>
-</div>
-</div>
-<div id="traditional-methods-for-analyzing-time-based-data" class="section level1">
-<h1><strong>Traditional Methods for Analyzing Time-Based
-Data</strong></h1>
-<div id="proposed-section-goals-2" class="section level2">
-<h2>Proposed section goals</h2>
-<ul>
-<li>Propensity score weighting adapted for DTR.</li>
-<li>Q functions and Q learning.</li>
-<li>Other traditional methods for time-based data analysis.</li>
-<li><strong>Existing Text:</strong>
-<ul>
-<li>“Traditional approaches such as longitudinal propensity score
-methods, marginal structural models, and instrumental variable analysis
-have been instrumental tools to estimate causal effects by accounting
-for confounding variables over time.”</li>
-</ul></li>
-</ul>
-</div>
-<div id="proposed-text-3" class="section level2">
-<h2>Proposed Text</h2>
-<p>Traditional methods for analyzing time-based data have been
-instrumental in advancing our understanding of dynamic treatment
-regimes. These methods provide the foundation for estimating causal
-effects in the presence of time-varying confounders, enabling
-researchers to draw meaningful conclusions about the effectiveness of
-different treatment strategies.</p>
-<p>Propensity score weighting is a widely used technique for addressing
-confounding in observational studies. By estimating the probability of
-treatment assignment based on observed covariates, propensity scores
-allow researchers to balance the treatment groups and reduce bias in
-causal effect estimates. In the context of dynamic treatment regimes,
-propensity score weighting can be adapted to account for the sequential
-nature of treatment decisions, providing a more accurate assessment of
-treatment effects over time.</p>
-<p>Q functions and Q learning are another set of traditional methods
-used in dynamic treatment research. Q functions represent the expected
-outcome given a particular treatment decision, while Q learning is an
-iterative process for estimating these functions. By modeling the
-relationship between treatment decisions and outcomes, Q learning
-provides a framework for optimizing treatment strategies and identifying
-the most effective interventions.</p>
-<p>Other traditional methods for time-based data analysis include
-marginal structural models and instrumental variable analysis. Marginal
-structural models use inverse probability weighting to account for
-time-varying confounders, while instrumental variable analysis leverages
-external variables to estimate causal effects in the presence of
-unmeasured confounding. These methods have been instrumental in
-advancing our understanding of dynamic treatment regimes, providing
-valuable insights into the factors that influence treatment
-effectiveness.</p>
-<p>In conclusion, traditional methods for analyzing time-based data
-provide a robust framework for estimating causal effects in dynamic
-treatment research. By leveraging these techniques, researchers can
-develop more personalized and effective treatment strategies, ultimately
-improving patient outcomes and the quality of care.</p>
-</div>
-</div>
-<div id="advanced-and-novel-causal-methods" class="section level1">
-<h1><strong>Advanced and Novel Causal Methods</strong></h1>
-<div id="proposed-section-goals-3" class="section level2">
-<h2>Proposed section goals</h2>
-<ul>
-<li>Exploration of advanced causal methods for time-based data.</li>
-<li>Discussion on the integration of these methods into dynamic
-treatment research.</li>
-<li><strong>Existing Text:</strong>
-<ul>
-<li>“Longitudinal Targeted Maximum Likelihood Estimation (LTMLE) offers
-a more powerful alternative by integrating machine learning techniques
-to provide robust and efficient causal estimates.”</li>
-</ul></li>
-</ul>
-</div>
-<div id="proposed-text-4" class="section level2">
-<h2>Proposed Text</h2>
-<p>The field of dynamic treatment research is rapidly evolving, with
-advanced and novel causal methods offering new opportunities for
-understanding and optimizing treatment strategies. These methods build
-on traditional approaches, incorporating machine learning techniques and
-other innovations to provide more robust and efficient causal
-estimates.</p>
-<p>Longitudinal Targeted Maximum Likelihood Estimation (LTMLE) is a
-leading example of an advanced causal method that has gained prominence
-in recent years. By integrating machine learning algorithms with
-targeted maximum likelihood estimation, LTMLE provides a powerful
-framework for estimating the effects of time-varying treatments in
-longitudinal data. This method is particularly effective in settings
-with complex relationships between variables, such as time-dependent
-confounding, which can bias traditional estimation methods.</p>
-<p>The integration of advanced causal methods into dynamic treatment
-research offers several advantages. By leveraging machine learning
-techniques, researchers can capture complex relationships between
-variables and improve the precision of causal effect estimates. This
-enables the development of more personalized and adaptive treatment
-strategies, ultimately leading to better patient outcomes and more
-efficient use of healthcare resources.</p>
-<p>In addition to LTMLE, other advanced causal methods are being
-explored for their potential to enhance dynamic treatment research.
-These include Bayesian approaches, which provide a flexible framework
-for incorporating prior knowledge and uncertainty into causal inference,
-and reinforcement learning, which offers a data-driven approach to
-optimizing treatment strategies over time.</p>
-<p>In summary, advanced and novel causal methods represent a significant
-advancement in the field of dynamic treatment research. By embracing
-these innovative techniques, researchers can gain a deeper understanding
-of the factors that influence treatment effectiveness and develop more
-personalized and effective treatment strategies, ultimately improving
-the quality of care and patient outcomes.</p>
-</div>
-</div>
-<div id="data-handling-and-analysis-techniques" class="section level1">
-<h1><strong>Data Handling and Analysis Techniques</strong></h1>
-<div id="proposed-section-goals-4" class="section level2">
-<h2>Proposed section goals</h2>
-<ul>
-<li>Overview of data handling techniques in dynamic treatment
-research.</li>
-<li>Discussion on multiple imputation and test-wise deletion as per
-Witte 2022.</li>
-<li>Considerations for data quality and integrity in longitudinal
-studies.</li>
-</ul>
-</div>
-<div id="proposed-text-5" class="section level2">
-<h2>Proposed Text</h2>
-<p>Multiple imputation and test-wise deletion are critical techniques
-for handling missing data in dynamic treatment research, as highlighted
-by Witte 2022. Multiple imputation involves creating several complete
-datasets by filling in missing values with plausible data points based
-on observed data patterns. This approach allows for more robust
-statistical analyses by accounting for the uncertainty associated with
-missing data.</p>
-<p>Test-wise deletion, on the other hand, involves excluding cases with
-missing data for specific tests or analyses. While this method can
-simplify data handling, it may lead to biased results if the missing
-data is not random. Therefore, careful consideration of the underlying
-data patterns and potential biases is essential when choosing between
-these techniques.</p>
-<p>Incorporating these data handling methods into dynamic treatment
-research can enhance the quality and reliability of causal inferences.
-By addressing the challenges associated with missing data, researchers
-can ensure that their findings are both valid and generalizable,
-ultimately improving the effectiveness of dynamic treatment
-strategies.</p>
-</div>
-</div>
-<div id="comparison-of-methods" class="section level1">
-<h1><strong>Comparison of Methods</strong></h1>
-<div id="proposed-section-goals-5" class="section level2">
-<h2>Proposed section goals</h2>
-<ul>
-<li>Pros and cons of traditional versus advanced causal methods.</li>
-<li>Case studies or examples illustrating the application of different
-methods.</li>
-</ul>
-</div>
-<div id="proposed-text-6" class="section level2">
-<h2>Proposed Text</h2>
-<p>The comparison of traditional and advanced causal methods is a
-critical aspect of dynamic treatment research, providing insights into
-the strengths and limitations of different approaches. By understanding
-the pros and cons of each method, researchers can make informed
-decisions about the most appropriate techniques for their specific
-research questions and data contexts.</p>
-<p>Traditional causal methods, such as propensity score weighting and
-marginal structural models, offer several advantages. These methods are
-well-established and widely used, providing a robust framework for
-estimating causal effects in the presence of confounding. They are also
-relatively straightforward to implement, making them accessible to
-researchers with varying levels of expertise in causal inference.</p>
-<p>However, traditional methods also have limitations. They may struggle
-to handle complex, high-dimensional data and time-varying confounders,
-which can lead to biased estimates of causal effects. Additionally,
-these methods often rely on strong assumptions about the relationships
-between variables, which may not hold in all settings.</p>
-<p>Advanced causal methods, such as LTMLE and reinforcement learning,
-offer a more flexible and powerful alternative. By incorporating machine
-learning techniques, these methods can capture complex relationships
-between variables and improve the precision of causal effect estimates.
-This enables the development of more personalized and adaptive treatment
-strategies, ultimately leading to better patient outcomes.</p>
-<p>Despite their advantages, advanced methods also have challenges. They
-can be computationally intensive and require a high level of expertise
-to implement correctly. Additionally, the integration of machine
-learning techniques introduces new considerations, such as the risk of
-overfitting and the need for careful model validation.</p>
-<p>Case studies and examples can provide valuable insights into the
-application of different causal methods in dynamic treatment research.
-By examining real-world scenarios, researchers can gain a deeper
-understanding of the strengths and limitations of each approach,
-ultimately guiding the selection of the most appropriate methods for
-their specific research questions.</p>
-<p>In conclusion, the comparison of traditional and advanced causal
-methods is a critical aspect of dynamic treatment research. By
-understanding the pros and cons of each approach, researchers can make
-informed decisions about the most appropriate techniques for their
-specific research questions and data contexts, ultimately improving the
-quality of care and patient outcomes.</p>
-</div>
-</div>
-<div id="future-directions-in-longitudinal-research" class="section level1">
-<h1><strong>Future Directions in Longitudinal Research</strong></h1>
-<div id="proposed-section-goals-6" class="section level2">
-<h2>Proposed section goals</h2>
-<ul>
-<li>The future of advanced causal methods in longitudinal studies.</li>
-<li>Introduction to a Shiny app that supports dynamic treatment
-research.</li>
-<li><strong>Existing Text:</strong>
-<ul>
-<li>“Dashboard for Dynamic Treatment Policy Evaluation: Describe the
-R-Shiny-based dashboard that simplifies the application of LTMLE/LMTP.
-Encourage researchers and clinicians to explore the open-source
-dashboard for their own datasets.”</li>
-</ul></li>
-</ul>
-</div>
-<div id="proposed-text-7" class="section level2">
-<h2>Proposed Text</h2>
-<p>The future of longitudinal research is poised for significant
-advancements, driven by the development and integration of advanced
-causal methods. These methods offer new opportunities for understanding
-and optimizing treatment strategies, ultimately leading to more
-personalized and effective healthcare delivery.</p>
-<p>One of the key areas of focus in future longitudinal research is the
-continued development and refinement of advanced causal methods, such as
-LTMLE and reinforcement learning. By leveraging machine learning
-techniques and other innovations, researchers can gain a deeper
-understanding of the complex relationships between variables and improve
-the precision of causal effect estimates. This will enable the
-development of more personalized and adaptive treatment strategies,
-ultimately leading to better patient outcomes and more efficient use of
-healthcare resources.</p>
-<p>In addition to methodological advancements, the future of
-longitudinal research will also be shaped by the development of new
-tools and technologies that support dynamic treatment research. One such
-tool is the R-Shiny-based dashboard for Dynamic Treatment Policy
-Evaluation, which simplifies the application of LTMLE/LMTP and
-encourages researchers and clinicians to explore the open-source
-dashboard for their own datasets. This dashboard provides a
-user-friendly interface for implementing advanced causal methods, making
-it accessible to a wider audience and facilitating the integration of
-these techniques into clinical practice.</p>
-<p>The future of longitudinal research also holds promise for the
-development of new data sources and technologies that enhance the
-collection and analysis of longitudinal data. Advances in wearable
-technology, remote monitoring, and other forms of digital health data
-collection will provide researchers with more comprehensive and detailed
-information on patient health status and treatment outcomes. This will
-enable the development of more personalized and adaptive treatment
-strategies, ultimately leading to better patient outcomes and more
-efficient use of healthcare resources.</p>
-<p>In conclusion, the future of longitudinal research is bright, with
-significant advancements in advanced causal methods and new tools and
-technologies that support dynamic treatment research. By embracing these
-innovations, researchers can gain a deeper understanding of the factors
-that influence treatment effectiveness and develop more personalized and
-effective treatment strategies, ultimately improving the quality of care
-and patient outcomes.</p>
-</div>
-</div>
-<div id="conclusion" class="section level1">
-<h1><strong>Conclusion</strong></h1>
-<p>Reiterate the importance of moving beyond static treatment
-comparisons. Emphasize the role of dynamic treatment policies in
-real-world decision-making. Encourage clinicians to adopt these advanced
-methods to optimize patient outcomes.</p>
-<div id="proposed-text-8" class="section level2">
-<h2>Proposed Text</h2>
-<p>The conclusion of this article underscores the critical importance of
-moving beyond static treatment comparisons and embracing dynamic
-treatment policies in healthcare. As the field of personalized medicine
-continues to evolve, dynamic treatment strategies offer a more flexible
-and responsive approach to patient care, enabling healthcare providers
-to tailor interventions based on individual patient responses and
-real-time data.</p>
-<p>Dynamic treatment policies play a vital role in real-world
-decision-making, providing a framework for optimizing treatment
-strategies and improving patient outcomes. By continuously assessing
-patient data and making informed decisions about treatment adjustments,
-healthcare providers can minimize the risks of overtreatment or
-undertreatment and enhance the overall quality of care.</p>
-<p>The adoption of advanced causal methods, such as LTMLE and
-reinforcement learning, is essential for realizing the full potential of
-dynamic treatment policies. These methods provide a powerful framework
-for estimating causal effects and developing personalized treatment
-strategies, ultimately leading to better patient outcomes and more
-efficient use of healthcare resources.</p>
-<p>Clinicians are encouraged to embrace these advanced methods and
-integrate them into their practice, leveraging the insights gained from
-dynamic treatment research to optimize patient care. By doing so, they
-can contribute to the ongoing advancement of personalized medicine and
-improve the quality of care for their patients.</p>
-<p>In summary, the shift towards dynamic treatment policies represents a
-significant advancement in the field of healthcare. By embracing these
-adaptive strategies and leveraging advanced causal methods, healthcare
-providers can better meet the needs of individual patients, ultimately
-leading to improved health outcomes and more efficient use of healthcare
-resources.</p>
-</div>
-</div>
-<div id="reading-list" class="section level1">
-<h1><strong>Reading List</strong></h1>
-<ul>
-<li><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC4231831/">Dynamic
-Treatment Regimes</a></li>
-<li><a href="https://pubmed.ncbi.nlm.nih.gov/38879744/">Learning Optimal
-Dynamic Treatment Regimes</a></li>
-</ul>
-<div id="worked-example-permissive-anemia" class="section level2">
-<h2>Worked Example: Permissive Anemia</h2>
-<p>To illustrate these concepts, we will present a case study on the
-treatment of permissive anemia using blood transfusion within a dynamic
-treatment framework. Using simulated data, we will implement causal
-inference techniques in R to compare different methodological approaches
-and assess their effectiveness in recovering the true treatment
-effect.</p>
-<p>[TO ADD: Overview of Permissive Anemia if this is the example we end
-up using.]</p>
-</div>
+<div id="bonus-librarylmtp" class="section level1">
+<h1>Bonus: library(lmtp)</h1>
+<pre class="r"><code># our treatment policy function to be applied at all time points
+policy &lt;- function(data, trt) {
+  if (trt == &quot;A1&quot;) {
+    return(as.numeric(data$L1 &lt; 0))
+  } else if (trt == &quot;A2&quot;) {
+    return(as.numeric(data$L2 &lt; 0))
+  }
+}</code></pre>
+<p>In addition to specifying a treatment policy, we need to specify our
+treatment variables and time-varying covariates.</p>
+<pre class="r"><code># treatment nodes
+A &lt;- c(&quot;A1&quot;, &quot;A2&quot;)
+# time varying nodes
+L &lt;- list(c(&quot;L1&quot;), c(&quot;L2&quot;))</code></pre>
+<p>We can now estimate the effect of our treatment policy,
+<code>d</code>.</p>
+<p>In this example, we’ll use the cross-validated TML estimator with 10
+folds.</p>
+<pre class="r"><code>result &lt;- lmtp_tmle(
+  df, 
+  A, 
+  &quot;Y&quot;, 
+  time_vary = L, 
+  shift = policy, 
+    # intervention_type = &quot;mtp&quot;, 
+    # intervention_type = &quot;det&quot;, new format: mtp = FALSE
+  mtp = FALSE,
+  folds = 10
+)
+
+print(result)</code></pre>
+<pre class="r"><code># Unfortunately, this currently prints as a &#39;warning&#39; 
+# so needs to be manually pasted: 
+
+# LMTP Estimator: TMLE
+#    Trt. Policy: (policy)
+# 
+# Population intervention estimate
+#       Estimate: 0.268
+#     Std. error: 0.0028
+#         95% CI: (0.2625, 0.2735)</code></pre>
+<pre class="r"><code>result$theta</code></pre>
+<pre><code>## [1] 0.268027</code></pre>
+<pre class="r"><code>result$standard_error</code></pre>
+<pre><code>## [1] 0.002799514</code></pre>
+<pre class="r"><code>c(result$low, result$high)</code></pre>
+<pre><code>## [1] 0.2625401 0.2735140</code></pre>
 </div>
 
 

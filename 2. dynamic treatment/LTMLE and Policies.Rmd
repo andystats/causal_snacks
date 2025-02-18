@@ -1,0 +1,254 @@
+---
+title: "Synthetic data and LMTP demo"
+author: 'Aimee Harisson and Andy Wilson'
+date: '`r format(Sys.Date(), "%B %d, %Y")`'
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    collapsed: false
+    toc_depth: 2
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+
+library(tidyverse)
+library(tmle)
+library(ltmle)
+data(sampleDataForLtmleMSM)
+library(lmtp)
+
+```
+
+
+```{r}
+# install.packages("ltmle_1.2-0.tar.gz", repos = NULL, type = "source")
+```
+
+# Thanks
+
+Special Thanks to Haodong Li! 
+
+# Libraries used
+
+```{r}
+library(tidyverse)
+library(tmle)
+library(ltmle)
+data(sampleDataForLtmleMSM)
+library(lmtp)
+```
+
+
+# Generate synthetic data
+
+
+```{r}
+# data with two time stage: O = (L(1), A(1), L(2), A(2), Y)
+get_data  <- function(n) {
+  L1 = rnorm(n)
+  A1 = rbinom(n, 1, plogis(0.01*(L1)))
+  L2 = 0.5*L1 + 0.7*A1 + rnorm(n)
+  A2 = rbinom(n, 1, plogis(0.01*(L2+A1+L1)))
+  Y = rbinom(n, 1, plogis(3*L1*A1 + 3*L2*A2))
+  O = data.frame(L1, A1, L2, A2, Y)
+  return(O)
+}
+```
+
+
+
+##  helper function generating counterfactual data
+
+```{r}
+get_data_d <- function(n, abar = 1) {
+  L1 = rnorm(n)
+  if (abar == "DTR") {
+    A1 = as.numeric(L1 < 0)
+  } else {
+    A1 = abar[1]
+  }
+  L2 = 0.5*L1 + 0.7*A1 + rnorm(n)
+  if (abar == "DTR") {
+    A2 = as.numeric(L2 < 0)
+  } else {
+    A2 = abar[1]
+  }
+  Y = rbinom(n, 1, plogis(3*L1*A1 + 3*L2*A2))
+  O = data.frame(L1, A1, L2, A2, Y)
+  return(O)
+}
+```
+
+
+
+## verify truth 
+
+$E(Y_{\bar{a} = 1})$ = 0.64
+
+```{r}
+set.seed(123)
+df_big <- get_data_d(1e6, abar = 1)
+mean(df_big$Y)
+```
+
+
+## verify truth (policy) 
+
+$E(Y_{\bar{a} = d})$ = 0.26, where d = $L1 < 0, L2 <0$
+
+```{r}
+df_big <- get_data_d(1e6, abar = "DTR")
+mean(df_big$Y)
+```
+
+
+
+# generate observed data
+
+```{r}
+set.seed(123)
+df <- get_data(1e4)
+head(df)
+```
+
+
+# ltmle estimation(s)
+
+
+
+## ltmle estimate 1: always on
+
+```{r}
+res.11 = ltmle(df,
+            Anodes = c("A1", "A2"),
+            Lnodes = c("L1", "L2"),
+            Ynodes = "Y",
+            abar = c(1,1),
+            SL.library = c("SL.glm", "SL.earth", "SL.xgboost"), 
+            SL.cvControl = list(V=10))
+summary(res.11)
+
+```
+
+
+
+## ltmle estimate 2:  always off
+
+```{r}
+res.00 = ltmle(df,
+            Anodes = c("A1", "A2"),
+            Lnodes = c("L1", "L2"),
+            Ynodes = "Y",
+            abar = c(0,0),
+            SL.library = c("SL.glm", "SL.earth", "SL.xgboost"), 
+            SL.cvControl = list(V=10))
+summary(res.00)
+```
+
+
+
+
+## ltmle estimate 3: dynamic rule
+
+```{r}
+d <- cbind(df$L1 < 0, df$L2 <0)
+
+res_d = ltmle(df,
+              Anodes = c("A1", "A2"),
+              Lnodes = c("L1", "L2"),
+              Ynodes = "Y",
+              abar = d,
+              SL.library = c("SL.glm","SL.earth", "SL.xgboost"), 
+              SL.cvControl = list(V=10))
+summary(res_d)
+```
+
+
+
+## ltmle estimate 4:  ATE
+
+```{r}
+res.ATE = ltmle(df,
+            Anodes = c("A1", "A2"),
+            Lnodes = c("L1", "L2"),
+            Ynodes = "Y",
+            abar = list(c(1,1), c(0,0)),
+            SL.library = c("SL.glm", "SL.earth", "SL.xgboost"), 
+            SL.cvControl = list(V=10))
+(Z <- summary(res.ATE))
+```
+
+### Odds ratio comparing always on vs. always off
+
+```{r}
+Z$effect.measures$OR$estimate
+Z$effect.measures$OR$CI
+```
+
+
+# Bonus: library(lmtp)
+
+
+
+```{r}
+# our treatment policy function to be applied at all time points
+policy <- function(data, trt) {
+  if (trt == "A1") {
+    return(as.numeric(data$L1 < 0))
+  } else if (trt == "A2") {
+    return(as.numeric(data$L2 < 0))
+  }
+}
+```
+
+
+In addition to specifying a treatment policy, we need to specify our treatment variables and time-varying covariates.
+
+```{r}
+# treatment nodes
+A <- c("A1", "A2")
+# time varying nodes
+L <- list(c("L1"), c("L2"))
+```
+
+We can now estimate the effect of our treatment policy, `d`. 
+
+In this example, we’ll use the cross-validated TML estimator with 10 folds.
+
+
+
+```{r}
+result <- lmtp_tmle(
+  df, 
+  A, 
+  "Y", 
+  time_vary = L, 
+  shift = policy, 
+    # intervention_type = "mtp", 
+    # intervention_type = "det", new format: mtp = FALSE
+  mtp = FALSE,
+  folds = 10
+)
+
+print(result)
+
+# Unfortunately, this currently prints as a 'warning' 
+# so needs to be manually pasted: 
+
+# LMTP Estimator: TMLE
+#    Trt. Policy: (policy)
+# 
+# Population intervention estimate
+#       Estimate: 0.268
+#     Std. error: 0.0028
+#         95% CI: (0.2625, 0.2735)
+```
+
+```{r}
+result$theta
+result$standard_error
+c(result$low, result$high)
+```
+

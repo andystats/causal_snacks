@@ -11,64 +11,140 @@ output:
     toc_depth: 2
 ---
 
-___________________
+------------------------------------------------------------------------
 
-# **Introduction**
+**Dynamic treatment policies** embody a healthcare model that actively *listens* to patients, continuously monitoring a broad range of factors to guide treatment decisions. In contrast, **static treatment policies** apply predefined rules based on a one-time assessment, assigning patients to *always treat* / *never treat* rules based on demographics, comorbidities, or other identifiers.
 
-## Static vs. Dynamic Treatment Policies
+Traditional research methodologies, including [randomized controlled trials (RCTs)](https://pmc.ncbi.nlm.nih.gov/articles/PMC8176647/ "If you are unfamiliar with RCTs, this paper from Zabor et al (2020) provides a foundational overview."), have historically followed principles aligned with static treatment policies. In these studies, patients are assessed at a single point in time, assigned to a static treatment regimen, and monitored for outcomes. Similarly, many [real-world evidence (RWE)](https://pmc.ncbi.nlm.nih.gov/articles/PMC8323556/ "If you are unfamiliar with real world evidence (RWE) study trials, this paper by Chodankar (2021) provides a foundational overview.") study designs have been developed to assess static treatments (for example, evaluating the long-term adverse effects of a treatment administered once, without considering subsequent treatment patterns).
 
-**Treatment policies** are structured guidelines or protocols used by healthcare providers to determine appropriate strategies for managing specific conditions. Grounded in clinical research, these policies provide a framework for decision-making, guiding clinicians in selecting optimal treatment options while balancing factors such as efficacy, safety, and cost-effectiveness.
+As healthcare providers increasingly embrace dynamic treatment strategies, there is a pressing need to evolve research methodologies to accurately assess their outcomes. Traditional study designs often fall short in capturing the complexities of dynamic treatment policies. For instance, while existing research methods can track adverse events in response to a static treatment protocol, they may not effectively evaluate how continuous adjustments in treatment impact patient outcomes over time.
 
-**Static treatment policies** prescribe fixed medical protocols that apply a uniform approach to patient care, often following an "always treat" or "never treat" rule. These policies do not account for individual patient variability or changing health conditions over time. While static policies can simplify clinical decision-making and promote uniformity in care, their rigidity can lead to overtreatment or undertreatment when patient needs evolve beyond the initial treatment framework.
-
-Advancements in evidence-based medicine, coupled with the increased availability of electronic health records (EHRs) and real-time patient monitoring, have driven a shift toward more personalized medical care. This shift has led to the emergence of **dynamic treatment policies**, adaptive medical protocols that continuously adjust treatment decisions based on a patient’s evolving condition and response to therapy. Unlike static policies, dynamic treatment policies integrate real-time data, patient feedback, and clinical reassessments to refine treatment strategies over time. By incorporating ongoing evaluations, these policies enhance both the effectiveness and efficiency of care, reducing the risks associated with static approaches.
-
-## The Need for Causal Methods with Longitudinal Data
-
-Dynamic treatment policies embody a healthcare model that actively "listens" to patients, continuously monitoring a broad range of factors to guide treatment decisions. In contrast, static treatment policies apply predefined rules based on a one-time assessment, assigning patients to "always treat"/"never treat" rules based on demographics, comorbidities, or other identifiers.
-
-Traditional research methodologies, including randomized controlled trials (RCTs), have historically followed principles aligned with static treatment policies. In these models, patients are assessed at a single point in time, assigned to a treatment regimen, and monitored for outcomes within a fixed framework. Similarly, many real-world evidence (RWE) study designs have been developed to assess static treatments (for example, evaluating the long-term adverse effects of a treatment administered once, without considering subsequent treatment patterns).
-
-As healthcare increasingly embraces dynamic treatment strategies, there is a pressing need to evolve research methodologies that can accurately assess their outcomes. Traditional study designs often fall short in capturing the complexities of dynamic treatment adjustments. For instance, while existing research methods can track adverse events in response to a static treatment protocol, they may not effectively evaluate how continuous adjustments in treatment impact patient outcomes over time.
-
-Advances in longitudinal study designs seek to address this gap by developing advanced methodologies capable of studying dynamic treatment policies within real-world settings. In this paper, we will explore the evolution of reactive treatment studies in clinical research, followed by an in-depth discussion of how dynamic treatment policies can be effectively analyzed using RWE methodologies. We will examine best practices for feasibility assessment, data collection, and study design, as well as explore advanced causal inference frameworks, such as Longitudinal Targeted Maximum Likelihood Estimation (LTMLE), that leverage machine learning to uncover causal relationships in dynamic treatment research.
+Advances in longitudinal study designs seek to address this gap by developing methodologies capable of studying dynamic treatment policies within real-world settings. In this paper, we will look at the history of reactive treatment studies in clinical research, focusing on recent advancements in RWE/RWD study design. We will examine best practices for feasibility assessment, data collection, and study design, as well as explore advanced causal inference frameworks, such as targeted maximum likelihood estimation (LTMLE), that leverage machine learning to uncover causal relationships in dynamic treatment research.
 
 This paper aims to provide both conceptual foundations and practical guidance for researchers interested in studying dynamic treatment policies. For those new to causal inference, we recommend first reviewing our Crash Course in Causal Methods, which introduces core causal inference concepts essential for understanding the methodologies discussed in this paper.
 
-## Worked Example: Permissive Anemia
+## Overview
 
-To illustrate these concepts, we will present a case study on the treatment of permissive anemia using blood transfusion within a dynamic treatment framework. Using simulated data, we will implement causal inference techniques in R to compare different methodological approaches and assess their effectiveness in recovering the true treatment effect.
+[in progress:
 
-[TO ADD: Overview of Permissive Anemia if this is the example we end up using.]
+1.  Introduction to static vs. dynamic treatment policies.
+2.  Historical context: RCTs and SMART trials.
+3.  Longitudinal studies in RWD
+4.  Advanced causal methods
+5.  Tools + future
+6.  Worked example: Permissive anemia.
 
+]
 
+---
 
+# Dynamic Treatment Policies {.tabset}
 
+## Overview
 
+**Treatment policies** are structured guidelines or protocols used by healthcare providers to determine appropriate strategies for managing specific conditions. Grounded in clinical research, these policies provide a framework for decision-making, guiding clinicians in selecting optimal treatment options while balancing factors such as efficacy, safety, and cost-effectiveness.
 
-   - This is where SMART trials were born. (We think of SMART as responsive or reactive; run out of runway anticipating these dynamic treatments)
-   - "ex-ante": hard to anticipate all of the meaningful patterns
-   - We want something that is reactive that can anticipate all the patterns.
-   - Want data who we have longitudinal records, where treatment dynamics have been recorded, with variables you think it reacts To
-   
-   - Worked example: intubation / outcome: COVID induced death; decision: when to intubate (not just "if"), what is the strategy?
-   - Blood transfusion: Permissive anemia; blood tranf. is hard on your body but you watch your body and develop an optimal strategy
-   - Listen to hemoglobin (and what else?) - age ? - DAG is essential 
+**Static treatment policies** prescribe fixed medical protocols that apply a uniform approach to patient care, often following an *always treat* or *never treat* rule. These policies do not account for individual patient variability or changing health conditions over time. While static policies can simplify clinical decision-making and promote uniformity in care, their rigidity can lead to *overtreatment* or *undertreatment* when patient needs evolve beyond the initial treatment framework.
 
-   - Sidebar: DAG is used differently in longitudinal studies. (A is acyclic and you're literally inviting a cycle.) (We don't believe cycles exist because a key feature is the passing of time. Our whole body is feedback loops but they become DAGS with the passage of time (only listens to the past)). 
-   - Non parametric structural equations (don't have to articulate the form in the same way in these)\
-   - But in a problem with this listening nature, that doesn't lend itself to a static treatment, you need to model and know what the triggers are. When and how much? 
+Advancements in evidence-based medicine, coupled with the increased availability of electronic health records (EHRs) and real-time patient monitoring, have driven a shift toward more personalized medical care. This shift has led to the emergence of **dynamic treatment policies**, adaptive medical protocols that continuously adjust treatment decisions based on a patient’s evolving condition and response to therapy. Unlike static policies, dynamic treatment policies integrate real-time data, patient feedback, and clinical reassessments to refine treatment strategies over time. By incorporating ongoing evaluations, these policies enhance both the effectiveness and efficiency of care, reducing the risks associated with static approaches.
 
-   - How we articulate the problem drives the analytics: If we only pull the patients with a blood transfusion, we condition on that outcome. But if we pull on patients permissive anemia we generalize further. 
-   - Who do we condition on? 
-   - Sidebar: What does it look like if we only condition on an outcome.  
+---
 
-   - Background on Dynamic Treatment Regimes (DTR) and Sequential Multiple Assignment Randomized Trials (SMART).
-   - Discussion on the use of dynamic treatment policies in healthcare and the role of structured observational data.
+## Example: Lawn Watering Policies
+
+Let's consider a sample study to look at the effects of regular watering on the greenness of lawns in a single town. For this study we will consider three treatment policies:
+
+-   **Static watering policy:** Always water the lawn for thirty minutes, once a day, between 7am and 9am.
+
+-   **Dynamic watering policy #1:** Every morning, review the previous day's weather, and proceed as follows:
+
+    -   If it rained for \>1 hour on the previous day, do not water.
+
+    -   Otherwise, water for thirty minutes, between 7am and 9am.
+
+-   **Dynamic watering policy #2:** Using smart sensors installed in each yard, review the yard's soil moisture content, and proceed as follows:
+
+    -   If the lawn's average soil moisture is above 70%, do not water.
+
+    -   If the lawn's average soil moisture is between 50-70%, water for 15 minutes between 7am and 9am.
+
+    -   If the lawn's average soil moisture is between 25-50%, water for 1 hour between 7am and 9am.
+
+    -   If the lawn's average soil moisture is below 25%, water for 1 hour between 7am and 9am, and for 30 minutes between 7pm and 9pm.
+
+Notice that the **static watering policy** treats all lawns as the same, and every day as the same. It is easy to imagine this *always on* treatment pattern leading to overwatering (not to mention wasted resources).
+
+**Dynamic watering policy #1** uses low-cost methods to assess environmental conditions, creating a responsive watering schedule that avoids overwatering. It does not take into account variations in individual lawns, which might be caused by location or other covariates that could affect water retention.
+
+**Dynamic treatment policy #3** considers each yard's differences and updates information daily to develop a responsive treatment plan. It is the only treatment policy that addresses both underwatering and overwatering. However, this policy requires continuous monitoring and advanced technologies, which may not be available to all participants in the study.
+
+---
+
+# A Brief History of Longitudinal Study Design in Clinical Trials {.tabset}
+
+## Sequential Multiple Assignment Randomized Trials (SMARTs)
+
+In a traditional randomized controlled trials (RCTs), participants are randomly assigned to either a treatment or control group, ensuring that differences in outcomes can be attributed to the intervention rather than external factors. These trials follow a static treatment approach, meaning that once participants are assigned a treatment regimen, it remains unchanged throughout the study. While this design is effective for evaluating single, well-defined interventions, it does not account for how patients’ conditions evolve over time or how they may respond differently to treatment adjustments. As a result, RCTs may not fully capture the complexities of personalized medicine, where treatment decisions are dynamic and continuously tailored to individual patients.
+
+Recognizing the limitations of static treatment models in traditional RCTs, researchers developed **sequential multiple assignment randomized trials (SMARTs)** as a more flexible approach to evaluating adaptive interventions. SMART trials originated in the early 2000s as part of the broader movement toward personalized and precision medicine. The methodology was pioneered by behavioral and mental health researchers seeking to optimize treatment strategies for conditions like depression, ADHD, and substance abuse, where patient responses to initial treatments vary significantly. The goal of SMART designs is to mimic real-world clinical decision-making by allowing for treatment adjustments based on patient progress, rather than adhering to a fixed, one-size-fits-all approach. \*\*[[add a citation]]\*\*
+
+SMART trials differ from traditional RCTs in that participants can be re-randomized at multiple decision points based on how they respond to initial treatments. This allows researchers to evaluate adaptive treatment strategies (ATSs)—structured decision rules that specify how treatments should be modified over time depending on individual patient needs. For example, in a SMART trial for depression treatment, patients who do not respond to an initial medication may be re-randomized to either an increased dose or a switch to a different medication, simulating the kind of decision-making that occurs in clinical practice.
+
+The design of SMART trials builds upon earlier multi-stage decision-making frameworks in biostatistics and engineering, but their application in healthcare research gained traction as precision medicine became a priority. Early applications focused on chronic disease management, psychiatry, and substance use disorders, demonstrating that treatment sequencing and individual tailoring could significantly improve patient outcomes. Over time, SMART methodologies expanded into other fields, including oncology, cardiology, and infectious diseases, where dynamic treatment adaptation is crucial.
+
+The increasing adoption of SMART trials reflects a broader shift toward data-driven, patient-centered research methodologies. By generating evidence on how best to sequence and adjust treatments, SMART trials provide clinicians with actionable insights into optimizing long-term patient care. Their success has also paved the way for more advanced adaptive trial designs, including reinforcement learning approaches and hybrid methods that integrate SMART with real-world evidence and machine learning techniques. These innovations are helping to refine our understanding of dynamic treatment policies, ensuring that research keeps pace with the complexities of modern healthcare.
+
+[ Example: Lawn watering. Policy: Always on: every morning 9am water for 30 minutes Policy Andy: Surrendered to an intelligent system: Rachio listens to the weather service and deactivates if its going to rain. Policy Aimee: Designed so detects soil moisture + listens to the weather DAG: last two are dynamic and responsive to different characteristics. First is static Simulate data There is no possible optimal watering strategy Target outcome: greenness of grass. Design the ultimate strategy Now extend this: City planner is trying to see if the fatter sprinklers are better. He randomly assigns to the fatter sprinklers and designs a study areound the impact of the fatness. he notices Hector has his sprinkler off when it's raining and penalizes Hector: Anyone reactive is kicked out of the program. SMART trials are saying: we kind of get it. We're going to give you some combinations: Water every morning. Louise, water every third morning. But they are still not responsive to the weather -- variations on static assignment. SMART studies have limited ability to incorporate the weeather : the analysis may not even capture the weather and statistics would not be able to capture it. New strategist: if sunny, water. If rainy, don't water. Then we need analytic methods --- recover the rule from all the Trivial: categories of variables: e.g. color of the house. Or nutrients in the soil. Or what is downstream. What variety of grass (cate: conditional average treatment effects - we might identify a rule for different substrata. Different individualized treatment strategies based on actual traits of the yard and conditions.)(Listening should be different for different people)
+
+vcork1 variant (double the dosage) <https://pmc.ncbi.nlm.nih.gov/articles/PMC2787394/>
+
+Then when looking at real longitudinal data, can't recreate the RCT because the intention is that you're looking at more responsive treatment so it wouldn't be possible. ] [ Can set the stage with this and look at Permissive Anemia. So after the walk through, let's take what we learned and set-up a study design ]
+
+## 
+
+# DAGs
+
+greenness of grass time of watering weather that : sunniness / heat
+
+if this is how we draw our dag, we know what variables we need before we pull. If we don't have our DAG, we pull all of this then draw the DAG then we don't have the possibility of unobserved variables in the DAG.
+
+permissive anemia: heart rate, hemoglobin, blood pressure. Look for what pieces could possibly be used in a policy. Intrusion of selection bias if you only pull in people with hemoglobin matched with records. So that's pulling iin people who are hugely sick. Could I predict a patient is missing from their covariates: informative missingness. Else: non-informative missingness and you can dump them.
+
+Analytics: LMTLE You have to be able to quickly make causal contrast : turn a rule into a policy matrix which isn't easy Wrapper to do this: LMTP package (Haodong); Turn the data into a policy matrix that is flipped on based on policy conditions. Intervene on this for your G computation
+
+-   This is where SMART trials were born. (We think of SMART as responsive or reactive; run out of runway anticipating these dynamic treatments)
+
+-   "ex-ante": hard to anticipate all of the meaningful patterns
+
+-   We want something that is reactive that can anticipate all the patterns.
+
+-   Want data who we have longitudinal records, where treatment dynamics have been recorded, with variables you think it reacts To
+
+-   Worked example: intubation / outcome: COVID induced death; decision: when to intubate (not just "if"), what is the strategy?
+
+-   Blood transfusion: Permissive anemia; blood tranf. is hard on your body but you watch your body and develop an optimal strategy
+
+-   Listen to hemoglobin (and what else?) - age ? - DAG is essential
+
+-   Sidebar: DAG is used differently in longitudinal studies. (A is acyclic and you're literally inviting a cycle.) (We don't believe cycles exist because a key feature is the passing of time. Our whole body is feedback loops but they become DAGS with the passage of time (only listens to the past)).
+
+-   Non parametric structural equations (don't have to articulate the form in the same way in these)\
+
+-   But in a problem with this listening nature, that doesn't lend itself to a static treatment, you need to model and know what the triggers are. When and how much?
+
+-   How we articulate the problem drives the analytics: If we only pull the patients with a blood transfusion, we condition on that outcome. But if we pull on patients permissive anemia we generalize further.
+
+-   Who do we condition on?
+
+-   Sidebar: What does it look like if we only condition on an outcome.
+
+-   Background on Dynamic Treatment Regimes (DTR) and Sequential Multiple Assignment Randomized Trials (SMART).
+
+-   Discussion on the use of dynamic treatment policies in healthcare and the role of structured observational data.
 
 ## Longitudinal modifiable treatment policies
 
-Longitudinal modifiable treatment policies (LMTPs) are a type of dynamic treatment policy providing adaptive healthcare strategies that evolve over time, based on continuous monitoring and assessment of a patient's health status. These policies leverage data-driven insights from regular health evaluations and patient feedback to adjust treatment plans. They are particularly useful in managing chronic conditions, allowing for proactive interventions and adjustments in response to changes in the patient's condition or emerging medical evidence. 
+Longitudinal modifiable treatment policies (LMTPs) are a type of dynamic treatment policy providing adaptive healthcare strategies that evolve over time, based on continuous monitoring and assessment of a patient's health status. These policies leverage data-driven insights from regular health evaluations and patient feedback to adjust treatment plans. They are particularly useful in managing chronic conditions, allowing for proactive interventions and adjustments in response to changes in the patient's condition or emerging medical evidence.
 
 LMTPs can be developed using a variety of causal inference models adapted to address the complexities of longitudinal data. Traditional approaches such as longitudinal propensity score methods, marginal structural models, and instrumental variable analysis have been instrumental tools to estimate causal effects by accounting for confounding variables over time. However, these methods often face limitations in handling complex, high-dimensional data and time-varying confounders. Longitudinal Targeted Maximum Likelihood Estimation (LTMLE) offers a more powerful alternative by integrating machine learning techniques to provide robust and efficient causal estimates. In this paper, we focus on LTMLE due to its ability to adaptively model dynamic treatment regimes and improve the precision of causal inferences in longitudinal studies.
 
@@ -88,9 +164,9 @@ Overall, LMTPs represent a significant advancement in the field of personalized 
 
 ## Proposed section goals
 
-   - Limitations of time-based data in observational studies.
-   - Overview of potential data sources for dynamic treatment research.
-   - Criteria for determining feasibility in time-based research.
+-   Limitations of time-based data in observational studies.
+-   Overview of potential data sources for dynamic treatment research.
+-   Criteria for determining feasibility in time-based research.
 
 ## Proposed Text
 
@@ -107,10 +183,11 @@ In conclusion, while time-based data in observational studies presents certain c
 # **Foundations of Causal Inference**
 
 ## Proposed section goals
-   - Introduction to causal inference and the construction of Directed Acyclic Graphs (DAGs).
-   - Reference to previous team publications for foundational methods.
-   - **Existing Text:**
-     - "Counterfactual outcomes refer to the hypothetical scenarios of what would have happened to an individual if they had received a different treatment or intervention than they actually did. In the context of longitudinal analysis, counterfactual outcomes are crucial for understanding the causal effects of time-varying treatments over time."
+
+-   Introduction to causal inference and the construction of Directed Acyclic Graphs (DAGs).
+-   Reference to previous team publications for foundational methods.
+-   **Existing Text:**
+    -   "Counterfactual outcomes refer to the hypothetical scenarios of what would have happened to an individual if they had received a different treatment or intervention than they actually did. In the context of longitudinal analysis, counterfactual outcomes are crucial for understanding the causal effects of time-varying treatments over time."
 
 ## Proposed Text
 
@@ -127,11 +204,12 @@ In summary, causal inference provides the foundation for dynamic treatment resea
 # **Traditional Methods for Analyzing Time-Based Data**
 
 ## Proposed section goals
-   - Propensity score weighting adapted for DTR.
-   - Q functions and Q learning.
-   - Other traditional methods for time-based data analysis.
-   - **Existing Text:**
-     - "Traditional approaches such as longitudinal propensity score methods, marginal structural models, and instrumental variable analysis have been instrumental tools to estimate causal effects by accounting for confounding variables over time."
+
+-   Propensity score weighting adapted for DTR.
+-   Q functions and Q learning.
+-   Other traditional methods for time-based data analysis.
+-   **Existing Text:**
+    -   "Traditional approaches such as longitudinal propensity score methods, marginal structural models, and instrumental variable analysis have been instrumental tools to estimate causal effects by accounting for confounding variables over time."
 
 ## Proposed Text
 
@@ -148,10 +226,11 @@ In conclusion, traditional methods for analyzing time-based data provide a robus
 # **Advanced and Novel Causal Methods**
 
 ## Proposed section goals
-   - Exploration of advanced causal methods for time-based data.
-   - Discussion on the integration of these methods into dynamic treatment research.
-   - **Existing Text:**
-     - "Longitudinal Targeted Maximum Likelihood Estimation (LTMLE) offers a more powerful alternative by integrating machine learning techniques to provide robust and efficient causal estimates."
+
+-   Exploration of advanced causal methods for time-based data.
+-   Discussion on the integration of these methods into dynamic treatment research.
+-   **Existing Text:**
+    -   "Longitudinal Targeted Maximum Likelihood Estimation (LTMLE) offers a more powerful alternative by integrating machine learning techniques to provide robust and efficient causal estimates."
 
 ## Proposed Text
 
@@ -168,9 +247,10 @@ In summary, advanced and novel causal methods represent a significant advancemen
 # **Data Handling and Analysis Techniques**
 
 ## Proposed section goals
-   - Overview of data handling techniques in dynamic treatment research.
-   - Discussion on multiple imputation and test-wise deletion as per Witte 2022.
-   - Considerations for data quality and integrity in longitudinal studies.
+
+-   Overview of data handling techniques in dynamic treatment research.
+-   Discussion on multiple imputation and test-wise deletion as per Witte 2022.
+-   Considerations for data quality and integrity in longitudinal studies.
 
 ## Proposed Text
 
@@ -183,8 +263,9 @@ Incorporating these data handling methods into dynamic treatment research can en
 # **Comparison of Methods**
 
 ## Proposed section goals
-   - Pros and cons of traditional versus advanced causal methods.
-   - Case studies or examples illustrating the application of different methods.
+
+-   Pros and cons of traditional versus advanced causal methods.
+-   Case studies or examples illustrating the application of different methods.
 
 ## Proposed Text
 
@@ -205,10 +286,11 @@ In conclusion, the comparison of traditional and advanced causal methods is a cr
 # **Future Directions in Longitudinal Research**
 
 ## Proposed section goals
-   - The future of advanced causal methods in longitudinal studies.
-   - Introduction to a Shiny app that supports dynamic treatment research.
-   - **Existing Text:**
-     - "Dashboard for Dynamic Treatment Policy Evaluation: Describe the R-Shiny-based dashboard that simplifies the application of LTMLE/LMTP. Encourage researchers and clinicians to explore the open-source dashboard for their own datasets."
+
+-   The future of advanced causal methods in longitudinal studies.
+-   Introduction to a Shiny app that supports dynamic treatment research.
+-   **Existing Text:**
+    -   "Dashboard for Dynamic Treatment Policy Evaluation: Describe the R-Shiny-based dashboard that simplifies the application of LTMLE/LMTP. Encourage researchers and clinicians to explore the open-source dashboard for their own datasets."
 
 ## Proposed Text
 
@@ -224,9 +306,7 @@ In conclusion, the future of longitudinal research is bright, with significant a
 
 # **Conclusion**
 
-Reiterate the importance of moving beyond static treatment comparisons.
-Emphasize the role of dynamic treatment policies in real-world decision-making.
-Encourage clinicians to adopt these advanced methods to optimize patient outcomes.
+Reiterate the importance of moving beyond static treatment comparisons. Emphasize the role of dynamic treatment policies in real-world decision-making. Encourage clinicians to adopt these advanced methods to optimize patient outcomes.
 
 ## Proposed Text
 
@@ -241,5 +321,12 @@ Clinicians are encouraged to embrace these advanced methods and integrate them i
 In summary, the shift towards dynamic treatment policies represents a significant advancement in the field of healthcare. By embracing these adaptive strategies and leveraging advanced causal methods, healthcare providers can better meet the needs of individual patients, ultimately leading to improved health outcomes and more efficient use of healthcare resources.
 
 # **Reading List**
-   - [Dynamic Treatment Regimes](https://pmc.ncbi.nlm.nih.gov/articles/PMC4231831/)
-   - [Learning Optimal Dynamic Treatment Regimes](https://pubmed.ncbi.nlm.nih.gov/38879744/)
+
+-   [Dynamic Treatment Regimes](https://pmc.ncbi.nlm.nih.gov/articles/PMC4231831/)
+-   [Learning Optimal Dynamic Treatment Regimes](https://pubmed.ncbi.nlm.nih.gov/38879744/)
+
+## Worked Example: Permissive Anemia
+
+To illustrate these concepts, we will present a case study on the treatment of permissive anemia using blood transfusion within a dynamic treatment framework. Using simulated data, we will implement causal inference techniques in R to compare different methodological approaches and assess their effectiveness in recovering the true treatment effect.
+
+[TO ADD: Overview of Permissive Anemia if this is the example we end up using.]
